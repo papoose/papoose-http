@@ -7,7 +7,7 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>papoose-cmpn-tests</artifactId>
+    <artifactId>papoose-http-tests</artifactId>
     <name>Papoose :: OSGi Compatibility Tests :: Tests</name>
     <packaging>jar</packaging>
 
@@ -45,14 +45,12 @@
         <dependency>
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>jetty</artifactId>
-            <version>${jettyVersion}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>jetty-util</artifactId>
-            <version>${jettyVersion}</version>
             <scope>test</scope>
         </dependency>
 
@@ -86,22 +84,7 @@
 
         <dependency>
             <groupId>org.papoose.cmpn</groupId>
-            <artifactId>papoose-cmpn-event</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.papoose.cmpn</groupId>
-            <artifactId>papoose-cmpn-http</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.papoose.cmpn</groupId>
-            <artifactId>papoose-cmpn-log</artifactId>
-            <version>${project.version}</version>
+            <artifactId>papoose-http</artifactId>
             <scope>test</scope>
         </dependency>
 

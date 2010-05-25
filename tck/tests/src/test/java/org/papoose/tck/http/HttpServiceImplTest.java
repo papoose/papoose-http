@@ -80,7 +80,7 @@ public class HttpServiceImplTest
                         mavenBundle().groupId("javax.servlet").artifactId("com.springsource.javax.servlet").version(asInProject()),
                         mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty").version(asInProject()),
                         mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty-util").version(asInProject()),
-                        mavenBundle().groupId("org.papoose.cmpn").artifactId("papoose-cmpn-http").version(asInProject())
+                        mavenBundle().groupId("org.papoose.cmpn").artifactId("papoose-http").version(asInProject())
                 )
         );
     }
