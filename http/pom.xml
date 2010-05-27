@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.papoose</groupId>
         <artifactId>papoose-root</artifactId>
-        <version>1.2-SNAPSHOT</version>
+        <version>1.2.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -13,7 +13,29 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Papoose :: HTTP Service</name>
-    <description>HTTP Service</description>
+    <description>OSGi Http Service</description>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>maguro</id>
+            <name>Alan D. Cabrera</name>
+            <email>adc@toolazydogs.com</email>
+            <url>http://www.toolazydogs.com</url>
+            <timezone>-8</timezone>
+        </developer>
+    </developers>
+
+    <issueManagement>
+        <system>papoose-r4</system>
+        <url>http://www.papoose-r4.org/support</url>
+    </issueManagement>
 
     <build>
         <plugins>
@@ -87,9 +109,8 @@
     </dependencies>
 
     <scm>
-        <connection>scm:svn:http://osgi.svn.sourceforge.net/svnroot/osgi/osgi-R4-spec/trunk</connection>
-        <developerConnection>scm:svn:https://osgi.svn.sourceforge.net/svnroot/osgi/osgi-R4-spec/trunk</developerConnection>
-        <url>https://osgi.svn.sourceforge.net/svnroot/osgi/osgi-R4-spec/trunk</url>
+        <connection>scm:git:git://github.com/maguro/papoose-http.git</connection>
+        <url>scm:git:git://github.com/maguro/papoose-http.git</url>
     </scm>
 
 </project>
