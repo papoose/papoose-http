@@ -72,12 +72,12 @@ import org.osgi.service.http.HttpContext;
 
     public int getMajorVersion()
     {
-        return 0;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return 2;
     }
 
     public int getMinorVersion()
     {
-        return 0;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return 5;
     }
 
     public String getMimeType(String file)

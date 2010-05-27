@@ -16,6 +16,7 @@
  */
 package org.papoose.http;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -36,7 +37,13 @@ public class ServletDispatcher extends HttpServlet
     private final static Logger LOGGER = Logger.getLogger(CLASS_NAME);
     private final List<ServletRegistration> registrations = new CopyOnWriteArrayList<ServletRegistration>();
 
-    @Override
+  @Override
+  public void init(ServletConfig config) throws ServletException
+  {
+    super.init(config);    //Todo change body of overridden methods use File | Settings | File Templates.
+  }
+
+  @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
         String path = req.getPathInfo();
