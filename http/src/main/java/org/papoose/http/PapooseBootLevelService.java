@@ -62,6 +62,13 @@ public class PapooseBootLevelService
         LOGGER.exiting(CLASS_NAME, "start");
     }
 
+    /**
+     * Stop the boot level service.
+     *
+     * Boot level services are stopped when the Papoose framework is being
+     * stopped. There's no point in unregistering the service since all other
+     * bundles have been uninstalled.
+     */
     public void stop()
     {
         LOGGER.entering(CLASS_NAME, "stop");

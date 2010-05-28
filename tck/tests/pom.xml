@@ -7,13 +7,21 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>papoose-http-tests</artifactId>
+    <artifactId>http-tests</artifactId>
     <name>Papoose :: OSGi Compatibility Tests :: Tests</name>
     <packaging>jar</packaging>
 
     <build>
         <plugins>
             <plugin>
+                <!--
+
+                The depends-maven-plugin generates the file target/classes/META-INF/maven/dependencies.properties
+                which Pax Exam can then use to resolve the version dependencies of groupId/artifactIds. This lets
+                you keep all your version information in your pom.xml and avoid having to update all your test
+                cases whenever your pom.xml changes.
+
+                -->
                 <groupId>org.apache.servicemix.tooling</groupId>
                 <artifactId>depends-maven-plugin</artifactId>
                 <executions>
