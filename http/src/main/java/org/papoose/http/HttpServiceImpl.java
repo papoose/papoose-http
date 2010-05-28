@@ -70,8 +70,16 @@ public class HttpServiceImpl implements HttpService
         }
     }
 
+    /**
+     * Start the HTTP service
+     */
     public void start() {}
 
+    /**
+     * Stop the HTTP service.
+     *
+     * This method assumes that the service registration has been removed.
+     */
     public void stop()
     {
         dispatcher.clear();

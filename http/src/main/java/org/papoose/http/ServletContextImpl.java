@@ -33,14 +33,14 @@ import org.osgi.service.http.HttpContext;
 /**
  * @version $Revision: $ $Date: $
  */
- class ServletContextImpl implements ServletContext
+class ServletContextImpl implements ServletContext
 {
     private final static String CLASS_NAME = ServletContextImpl.class.getName();
     private final static Logger LOGGER = Logger.getLogger(CLASS_NAME);
     private final HttpContext httpContext;
     private int referenceCount;
 
-     ServletContextImpl(HttpContext httpContext)
+    ServletContextImpl(HttpContext httpContext)
     {
         this.httpContext = httpContext;
     }
