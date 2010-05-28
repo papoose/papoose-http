@@ -2,12 +2,12 @@
 <project>
     <parent>
         <groupId>org.papoose.cmpn</groupId>
-        <artifactId>papoose-project</artifactId>
+        <artifactId>http-project</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.papoose.core.tck</groupId>
+    <groupId>org.papoose.cmpn.tck</groupId>
     <artifactId>tck</artifactId>
     <packaging>pom</packaging>
     <name>Papoose :: OSGi Compatibility Tests</name>
