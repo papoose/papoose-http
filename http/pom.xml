@@ -45,7 +45,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Bundle-SymbolicName>org.papoose.cmpn.event</Bundle-SymbolicName>
+                        <Bundle-SymbolicName>org.papoose.cmpn.http</Bundle-SymbolicName>
                         <Export-Package>org.papoose.http</Export-Package>
                         <Import-Package>org.mortbay.jetty;version="[6.1,6.2)",org.mortbay.jetty.nio;version="[6.1,6.2)",org.mortbay.jetty.security;version="[6.1,6.2)",org.mortbay.jetty.servlet;version="[6.1,6.2)",org.mortbay.thread;version="[6.1,6.2)",org.papoose.core;resolution:=optional,javax.servlet;version="[2.4,3)",javax.servlet.http;version="[2.4,3)",org.osgi.framework;version="[1,2)",org.osgi.service.http;version="[1.2,2)"</Import-Package>
                         <Private-Package>org.papoose.http.util</Private-Package>
