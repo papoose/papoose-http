@@ -32,10 +32,11 @@ import java.util.Dictionary;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.Assert;
+import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.ops4j.pax.exam.CoreOptions.equinox;
@@ -52,6 +53,7 @@ import org.ops4j.pax.exam.junit.Configuration;
 import org.ops4j.pax.exam.junit.JUnit4TestRunner;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
@@ -59,7 +61,6 @@ import org.osgi.service.http.NamespaceException;
 import org.papoose.http.HttpServer;
 import org.papoose.http.HttpServiceImpl;
 import org.papoose.http.JettyHttpServer;
-import org.papoose.http.ServletDispatcher;
 import org.papoose.tck.http.servlets.InitParameterTestServlet;
 import org.papoose.tck.http.servlets.ParameterTestServlet;
 
@@ -72,6 +73,9 @@ public class HttpServiceImplTest
 {
     @Inject
     private BundleContext bundleContext = null;
+    private HttpServer server;
+    private HttpServiceImpl httpService;
+    private ServiceRegistration registration;
 
     @Configuration
     public static Option[] configure()
@@ -82,357 +86,253 @@ public class HttpServiceImplTest
                 knopflerfish(),
                 // papoose(),
                 compendiumProfile(),
-//                 vmOption("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
-// this is necessary to let junit runner not timeout the remote process before attaching debugger
-// setting timeout to 0 means wait as long as the remote service comes available.
-// starting with version 0.5.0 of PAX Exam this is no longer required as by default the framework tests
-// will not be triggered till the framework is not started
-// waitForFrameworkStartup()
-provision(
-        mavenBundle().groupId("javax.servlet").artifactId("com.springsource.javax.servlet").version(asInProject()),
-        mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty").version(asInProject()),
-        mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty-util").version(asInProject()),
-        mavenBundle().groupId("org.papoose.cmpn").artifactId("papoose-http").version(asInProject())
-)
+                // vmOption("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
+                // this is necessary to let junit runner not timeout the remote process before attaching debugger
+                // setting timeout to 0 means wait as long as the remote service comes available.
+                // starting with version 0.5.0 of PAX Exam this is no longer required as by default the framework tests
+                // will not be triggered till the framework is not started
+                // waitForFrameworkStartup()
+                provision(
+                        mavenBundle().groupId("javax.servlet").artifactId("com.springsource.javax.servlet").version(asInProject()),
+                        mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty").version(asInProject()),
+                        mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty-util").version(asInProject()),
+                        mavenBundle().groupId("org.papoose.cmpn").artifactId("papoose-http").version(asInProject())
+                )
         );
     }
 
     @Test
     public void testServletRegistrations() throws Exception
     {
-        Assert.assertNotNull(bundleContext);
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
 
-        Properties properties = new Properties();
+        final AtomicBoolean hit = new AtomicBoolean(false);
+        service.registerServlet("/a/b", new GenericServlet()
+        {
+            @Override
+            public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException
+            {
+                hit.set(true);
+            }
+        }, null, null);
 
-        properties.setProperty(HttpServer.HTTP_PORT, "8080");
+        URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class");
 
-        HttpServer server = JettyHttpServer.generate(properties);
+        url.openStream();
 
-        server.start();
+        assertTrue(hit.get());
 
-        HttpServiceImpl httpService = new HttpServiceImpl(bundleContext, server.getServletDispatcher());
-
-        httpService.start();
-        bundleContext.registerService(HttpService.class.getName(), httpService, null);
+        service.unregister("/a/b");
 
         try
         {
-            ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
-            HttpService service = (HttpService) bundleContext.getService(sr);
-
-            final AtomicBoolean hit = new AtomicBoolean(false);
-            service.registerServlet("/a/b", new GenericServlet()
-            {
-                @Override
-                public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException
-                {
-                    hit.set(true);
-                }
-            }, null, null);
-
-            URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class");
-
-            url.openStream();
-
-            assertTrue(hit.get());
-
-            service.unregister("/a/b");
-
-            try
-            {
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
-                fail("Simple servlet improperly available");
-            }
-            catch (IOException e)
-            {
-            }
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
         }
-        finally
+        catch (IOException e)
         {
-            httpService.stop();
-            server.stop();
         }
     }
 
     @Test
     public void testServletParameters() throws Exception
     {
-        Assert.assertNotNull(bundleContext);
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
 
-        Properties properties = new Properties();
+        service.registerServlet("/a/b", new ParameterTestServlet(), null, null);
 
-        properties.setProperty(HttpServer.HTTP_PORT, "8080");
+        URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class?a=1&b=2&c=3");
 
-        HttpServer server = JettyHttpServer.generate(properties);
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
 
-        server.start();
+        assertEquals("#a:1#b:2#c:3#", br.readLine());
 
-        HttpServiceImpl httpService = new HttpServiceImpl(bundleContext, server.getServletDispatcher());
-
-        httpService.start();
-        bundleContext.registerService(HttpService.class.getName(), httpService, null);
+        service.unregister("/a/b");
 
         try
         {
-            ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
-            HttpService service = (HttpService) bundleContext.getService(sr);
-
-            service.registerServlet("/a/b", new ParameterTestServlet(), null, null);
-
-            URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class?a=1&b=2&c=3");
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
-
-            assertEquals("#a:1#b:2#c:3#", br.readLine());
-
-            service.unregister("/a/b");
-
-            try
-            {
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
-                fail("Simple servlet improperly available");
-            }
-            catch (IOException e)
-            {
-            }
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
         }
-        finally
+        catch (IOException e)
         {
-            httpService.stop();
-            server.stop();
         }
     }
 
     @Test
     public void testServletInitParameters() throws Exception
     {
-        Assert.assertNotNull(bundleContext);
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
 
-        Properties properties = new Properties();
+        Dictionary<Object, Object> init = new Properties();
+        init.put("a", "1");
+        init.put("b", "2");
+        init.put("c", "3");
 
-        properties.setProperty(HttpServer.HTTP_PORT, "8080");
+        service.registerServlet("/a/b", new InitParameterTestServlet(), init, null);
 
-        HttpServer server = JettyHttpServer.generate(properties);
+        URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class");
 
-        server.start();
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
 
-        HttpServiceImpl httpService = new HttpServiceImpl(bundleContext, server.getServletDispatcher());
+        assertEquals("#a:1#b:2#c:3#", br.readLine());
 
-        httpService.start();
-        bundleContext.registerService(HttpService.class.getName(), httpService, null);
+        service.unregister("/a/b");
 
         try
         {
-            ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
-            HttpService service = (HttpService) bundleContext.getService(sr);
-
-            Dictionary<Object, Object> init = new Properties();
-            init.put("a", "1");
-            init.put("b", "2");
-            init.put("c", "3");
-
-            service.registerServlet("/a/b", new InitParameterTestServlet(), init, null);
-
-            URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class");
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
-
-            assertEquals("#a:1#b:2#c:3#", br.readLine());
-
-            service.unregister("/a/b");
-
-            try
-            {
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
-                fail("Simple servlet improperly available");
-            }
-            catch (IOException e)
-            {
-            }
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
         }
-        finally
+        catch (IOException e)
         {
-            httpService.stop();
-            server.stop();
         }
     }
 
     @Test
     public void testResourceRegistrations() throws Exception
     {
-        Assert.assertNotNull(bundleContext);
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
 
-        ServletDispatcher dispatcher = new ServletDispatcher();
-        HttpServiceImpl httpService = new HttpServiceImpl(bundleContext, dispatcher);
-
-        httpService.start();
-        bundleContext.registerService(HttpService.class.getName(), httpService, null);
-
+        service.registerResources("/a/b", "/car", service.createDefaultHttpContext());
         try
         {
-            ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
-            HttpService service = (HttpService) bundleContext.getService(sr);
-
             service.registerResources("/a/b", "/car", service.createDefaultHttpContext());
-            try
-            {
-                service.registerResources("/a/b", "/car", service.createDefaultHttpContext());
-                fail("Should not be able to register with same alias");
-            }
-            catch (NamespaceException ignore)
-            {
-            }
-
-            service.unregister("/a/b");
+            fail("Should not be able to register with same alias");
         }
-        finally
+        catch (NamespaceException ignore)
         {
-            httpService.stop();
         }
+
+        service.unregister("/a/b");
     }
 
     @Test
     public void testResourceAbsolute() throws Exception
     {
-        Assert.assertNotNull(bundleContext);
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
 
-        Properties properties = new Properties();
+        service.registerResources("/a/b", "/org/papoose/tck", new HttpContext()
+        {
+            public boolean handleSecurity(HttpServletRequest request, HttpServletResponse response) throws IOException
+            {
+                return true;
+            }
 
-        properties.setProperty(HttpServer.HTTP_PORT, "8080");
+            public URL getResource(String name)
+            {
+                return HttpServiceImplTest.class.getResource(name);
+            }
 
-        HttpServer server = JettyHttpServer.generate(properties);
+            public String getMimeType(String name)
+            {
+                return null;
+            }
+        });
 
-        server.start();
+        URL url = new URL("http://localhost:8080/a/b/http/HttpServiceImplTest.class");
 
-        HttpServiceImpl httpService = new HttpServiceImpl(bundleContext, server.getServletDispatcher());
+        DataInputStream reader = new DataInputStream(url.openStream());
 
-        httpService.start();
-        bundleContext.registerService(HttpService.class.getName(), httpService, null);
+        assertEquals((byte) 0xca, reader.readByte());
+        assertEquals((byte) 0xfe, reader.readByte());
+
+        assertEquals((byte) 0xba, reader.readByte());
+        assertEquals((byte) 0xbe, reader.readByte());
+
+        service.unregister("/a/b");
 
         try
         {
-            ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
-            HttpService service = (HttpService) bundleContext.getService(sr);
-
-            service.registerResources("/a/b", "/org/papoose/tck", new HttpContext()
-            {
-                public boolean handleSecurity(HttpServletRequest request, HttpServletResponse response) throws IOException
-                {
-                    return true;
-                }
-
-                public URL getResource(String name)
-                {
-                    return HttpServiceImplTest.class.getResource(name);
-                }
-
-                public String getMimeType(String name)
-                {
-                    return null;
-                }
-            });
-
-            URL url = new URL("http://localhost:8080/a/b/http/HttpServiceImplTest.class");
-
-            DataInputStream reader = new DataInputStream(url.openStream());
-
-            assertEquals((byte) 0xca, reader.readByte());
-            assertEquals((byte) 0xfe, reader.readByte());
-
-            assertEquals((byte) 0xba, reader.readByte());
-            assertEquals((byte) 0xbe, reader.readByte());
-
-            service.unregister("/a/b");
-
-            try
-            {
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
-                fail("Simple servlet improperly available");
-            }
-            catch (IOException e)
-            {
-            }
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
         }
-        finally
+        catch (IOException e)
         {
-            httpService.stop();
-            server.stop();
         }
     }
 
     @Test
     public void testResourceRelative() throws Exception
     {
-        Assert.assertNotNull(bundleContext);
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
 
+        service.registerResources("/a/b", ".", new HttpContext()
+        {
+            public boolean handleSecurity(HttpServletRequest request, HttpServletResponse response) throws IOException
+            {
+                return true;
+            }
+
+            public URL getResource(String name)
+            {
+                name = name.replaceAll("^\\./", "");
+                name = name.replaceAll("/\\./", "/");
+                return HttpServiceImplTest.class.getResource(name);
+            }
+
+            public String getMimeType(String name)
+            {
+                return null;
+            }
+        });
+
+        URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class");
+
+        DataInputStream reader = new DataInputStream(url.openStream());
+
+        assertEquals((byte) 0xca, reader.readByte());
+        assertEquals((byte) 0xfe, reader.readByte());
+
+        assertEquals((byte) 0xba, reader.readByte());
+        assertEquals((byte) 0xbe, reader.readByte());
+
+        service.unregister("/a/b");
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
+        }
+        catch (IOException e)
+        {
+        }
+    }
+
+    @Before
+    public void startup()
+    {
         Properties properties = new Properties();
 
         properties.setProperty(HttpServer.HTTP_PORT, "8080");
 
-        HttpServer server = JettyHttpServer.generate(properties);
+        server = JettyHttpServer.generate(properties);
 
         server.start();
 
-        HttpServiceImpl httpService = new HttpServiceImpl(bundleContext, server.getServletDispatcher());
+        httpService = new HttpServiceImpl(bundleContext, server.getServletDispatcher());
 
         httpService.start();
-        bundleContext.registerService(HttpService.class.getName(), httpService, null);
 
-        try
-        {
-            ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
-            HttpService service = (HttpService) bundleContext.getService(sr);
+        registration = bundleContext.registerService(HttpService.class.getName(), httpService, null);
+    }
 
-            service.registerResources("/a/b", ".", new HttpContext()
-            {
-                public boolean handleSecurity(HttpServletRequest request, HttpServletResponse response) throws IOException
-                {
-                    return true;
-                }
-
-                public URL getResource(String name)
-                {
-                    name = name.replaceAll("^\\./", "");
-                    name = name.replaceAll("/\\./", "/");
-                    return HttpServiceImplTest.class.getResource(name);
-                }
-
-                public String getMimeType(String name)
-                {
-                    return null;
-                }
-            });
-
-            URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class");
-
-            DataInputStream reader = new DataInputStream(url.openStream());
-
-            assertEquals((byte) 0xca, reader.readByte());
-            assertEquals((byte) 0xfe, reader.readByte());
-
-            assertEquals((byte) 0xba, reader.readByte());
-            assertEquals((byte) 0xbe, reader.readByte());
-
-            service.unregister("/a/b");
-
-            try
-            {
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
-                fail("Simple servlet improperly available");
-            }
-            catch (IOException e)
-            {
-            }
-        }
-        finally
-        {
-            httpService.stop();
-            server.stop();
-        }
+    @After
+    public void teardown()
+    {
+        registration.unregister();
+        httpService.stop();
+        server.stop();
     }
 }
