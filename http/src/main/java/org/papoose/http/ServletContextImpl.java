@@ -20,10 +20,14 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.Dictionary;
 import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -37,37 +41,48 @@ class ServletContextImpl implements ServletContext
 {
     private final static String CLASS_NAME = ServletContextImpl.class.getName();
     private final static Logger LOGGER = Logger.getLogger(CLASS_NAME);
+    private final static ThreadLocal<Dictionary> INIT_PARAMS = new ThreadLocal<Dictionary>();
+    private final Map<String, Object> attributes = new Hashtable<String, Object>();
+    private final String alias;
     private final HttpContext httpContext;
+    private final ServletDispatcher servletDispatcher;
     private int referenceCount;
 
-    ServletContextImpl(HttpContext httpContext)
+    ServletContextImpl(String alias, HttpContext httpContext, ServletDispatcher servletDispatcher)
     {
+        this.alias = alias;
         this.httpContext = httpContext;
+        this.servletDispatcher = servletDispatcher;
     }
 
-    public int getReferenceCount()
+    HttpContext getHttpContext()
+    {
+        return httpContext;
+    }
+
+    int getReferenceCount()
     {
         return referenceCount;
     }
 
-    public void incrementReferenceCount()
+    void incrementReferenceCount()
     {
         referenceCount--;
     }
 
-    public void decrementReferenceCount()
+    void decrementReferenceCount()
     {
         referenceCount++;
     }
 
     public String getContextPath()
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return alias;
     }
 
     public ServletContext getContext(String uripath)
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return servletDispatcher.getContext(uripath);
     }
 
     public int getMajorVersion()
@@ -82,106 +97,131 @@ class ServletContextImpl implements ServletContext
 
     public String getMimeType(String file)
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        LOGGER.entering(CLASS_NAME, "getMimeType", file);
+
+        String mimeType = httpContext.getMimeType(file);
+
+        if (mimeType == null) mimeType = servletDispatcher.getServletContext().getMimeType(file);
+
+        LOGGER.exiting(CLASS_NAME, "getMimeType", mimeType);
+
+        return mimeType;
     }
 
     public Set getResourcePaths(String path)
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
-    public URL getResource(String path) throws MalformedURLException
+    public URL getResource(String path)
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return httpContext.getResource(path);
     }
 
     public InputStream getResourceAsStream(String path)
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        URL url = getResource(path);
+        if (url != null)
+        {
+            try
+            {
+                return url.openStream();
+            }
+            catch (IOException ignore)
+            {
+            }
+        }
+
+        return null;
     }
 
     public RequestDispatcher getRequestDispatcher(String path)
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return servletDispatcher.getRequestDispatcher(path);
     }
 
     public RequestDispatcher getNamedDispatcher(String name)
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return servletDispatcher.getNamedDispatcher(name);
     }
 
     public Servlet getServlet(String name) throws ServletException
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
     public Enumeration getServlets()
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return Collections.enumeration(Collections.<Object>emptySet());
     }
 
     public Enumeration getServletNames()
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return Collections.enumeration(Collections.<Object>emptySet());
     }
 
     public void log(String msg)
     {
-        //Todo change body of implemented methods use File | Settings | File Templates.
+        servletDispatcher.getServletContext().log(msg);
     }
 
     public void log(Exception exception, String msg)
     {
-        //Todo change body of implemented methods use File | Settings | File Templates.
+        servletDispatcher.getServletContext().log(exception, msg);
     }
 
     public void log(String message, Throwable throwable)
     {
-        //Todo change body of implemented methods use File | Settings | File Templates.
+        servletDispatcher.getServletContext().log(message, throwable);
     }
 
     public String getRealPath(String path)
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
     public String getServerInfo()
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return "Papoose OSGi HTTP server";
     }
 
     public String getInitParameter(String name)
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return (String) INIT_PARAMS.get().get(name);
     }
 
     public Enumeration getInitParameterNames()
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return INIT_PARAMS.get().keys();
     }
 
     public Object getAttribute(String name)
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return attributes.get(name);
     }
 
     public Enumeration getAttributeNames()
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return Collections.enumeration(attributes.keySet());
     }
 
     public void setAttribute(String name, Object object)
     {
-        //Todo change body of implemented methods use File | Settings | File Templates.
+        attributes.put(name, object);
     }
 
     public void removeAttribute(String name)
     {
-        //Todo change body of implemented methods use File | Settings | File Templates.
+        attributes.remove(name);
     }
 
     public String getServletContextName()
     {
-        return null;  //Todo change body of implemented methods use File | Settings | File Templates.
+        return null;
+    }
+
+    static void insertInitParams(Dictionary initParams)
+    {
+        INIT_PARAMS.set(initParams);
     }
 }

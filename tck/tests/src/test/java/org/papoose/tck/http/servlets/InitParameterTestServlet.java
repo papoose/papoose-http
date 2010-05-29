@@ -16,12 +16,10 @@
  */
 package org.papoose.tck.http.servlets;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
+import javax.servlet.GenericServlet;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -34,27 +32,14 @@ import java.util.TreeSet;
 /**
  * @version $Revision: $ $Date: $
  */
-public class InitParameterTestServlet implements Servlet
+public class InitParameterTestServlet extends GenericServlet
 {
-    private ServletConfig config;
-
-    public void init(ServletConfig config) throws ServletException
-    {
-        this.config = config;
-
-    }
-
-    public ServletConfig getServletConfig()
-    {
-        return config;
-    }
-
     public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException
     {
         HttpServletResponse response = (HttpServletResponse) res;
         BufferedWriter stream = new BufferedWriter(new OutputStreamWriter(response.getOutputStream()));
 
-        Enumeration<String> enumeration = config.getInitParameterNames();
+        Enumeration<String> enumeration = getServletConfig().getInitParameterNames();
         SortedSet<String> names = new TreeSet<String>();
         while (enumeration.hasMoreElements())
         {
@@ -63,7 +48,7 @@ public class InitParameterTestServlet implements Servlet
 
         for (String name : names)
         {
-            String value = config.getInitParameter(name);
+            String value = getServletConfig().getInitParameter(name);
             stream.write("#");
             stream.write(name);
             stream.write(":");
@@ -78,10 +63,6 @@ public class InitParameterTestServlet implements Servlet
 
     public String getServletInfo()
     {
-        return "Test servlet 1";
-    }
-
-    public void destroy()
-    {
+        return InitParameterTestServlet.class.getName();
     }
 }

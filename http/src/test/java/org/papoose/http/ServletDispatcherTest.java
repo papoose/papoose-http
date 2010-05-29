@@ -62,7 +62,8 @@ public class ServletDispatcherTest
         ServletDispatcher dispatcher = new ServletDispatcher();
         Servlet servlet = mock(Servlet.class);
         HttpContext context = mock(HttpContext.class);
-        ServletRegistration registration = new ServletRegistration("/a/b", servlet, context);
+        ServletContextImpl sc = new ServletContextImpl(null, context, null);
+        ServletRegistration registration = new ServletRegistration("/a/b", servlet, sc, null);
 
         doAnswer(new Answer()
         {
@@ -91,7 +92,8 @@ public class ServletDispatcherTest
         ServletDispatcher dispatcher = new ServletDispatcher();
         Servlet servlet = mock(Servlet.class);
         HttpContext context = mock(HttpContext.class);
-        ServletRegistration registration = new ServletRegistration("/a/b", servlet, context);
+        ServletContextImpl sc = new ServletContextImpl(null, context, null);
+        ServletRegistration registration = new ServletRegistration("/a/b", servlet, sc, null);
 
         when(context.handleSecurity(request, response)).thenAnswer(new Answer()
         {
@@ -119,7 +121,8 @@ public class ServletDispatcherTest
         ServletDispatcher dispatcher = new ServletDispatcher();
         Servlet servlet = mock(Servlet.class);
         HttpContext context = mock(HttpContext.class);
-        ServletRegistration registration = new ServletRegistration("/", servlet, context);
+        ServletContextImpl sc = new ServletContextImpl(null, context, null);
+        ServletRegistration registration = new ServletRegistration("/", servlet, sc, null);
 
         doAnswer(new Answer()
         {
@@ -148,7 +151,8 @@ public class ServletDispatcherTest
         ServletDispatcher dispatcher = new ServletDispatcher();
         Servlet servlet = mock(Servlet.class);
         HttpContext context = mock(HttpContext.class);
-        ServletRegistration registration = new ServletRegistration("/a/b", servlet, context);
+        ServletContextImpl sc = new ServletContextImpl(null, context, null);
+        ServletRegistration registration = new ServletRegistration("/a/b", servlet, sc, null);
 
         doThrow(new NullPointerException()).when(servlet).service(request, response);
         when(context.handleSecurity(request, response)).thenReturn(true);
@@ -169,7 +173,8 @@ public class ServletDispatcherTest
         ServletDispatcher dispatcher = new ServletDispatcher();
         Servlet servlet = mock(Servlet.class);
         HttpContext context = mock(HttpContext.class);
-        ServletRegistration registration = new ServletRegistration("/a/b", servlet, context);
+        ServletContextImpl sc = new ServletContextImpl(null, context, null);
+        ServletRegistration registration = new ServletRegistration("/a/b", servlet, sc, null);
 
         doThrow(new ServletException()).when(servlet).service(request, response);
         when(context.handleSecurity(request, response)).thenReturn(true);
@@ -197,7 +202,8 @@ public class ServletDispatcherTest
         ServletDispatcher dispatcher = new ServletDispatcher();
         Servlet servlet = mock(Servlet.class);
         HttpContext context = mock(HttpContext.class);
-        ServletRegistration registration = new ServletRegistration("/cad", servlet, context);
+        ServletContextImpl sc = new ServletContextImpl(null, context, null);
+        ServletRegistration registration = new ServletRegistration("/cad", servlet, sc, null);
 
         doAnswer(new Answer()
         {
@@ -226,7 +232,8 @@ public class ServletDispatcherTest
         ServletDispatcher dispatcher = new ServletDispatcher();
         Servlet servlet = mock(Servlet.class);
         HttpContext context = mock(HttpContext.class);
-        ServletRegistration registration = new ServletRegistration("/a/b", servlet, context);
+        ServletContextImpl sc = new ServletContextImpl(null, context, null);
+        ServletRegistration registration = new ServletRegistration("/a/b", servlet, sc, null);
 
         doAnswer(new Answer()
         {

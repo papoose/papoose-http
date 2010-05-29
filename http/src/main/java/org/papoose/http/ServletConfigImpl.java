@@ -28,31 +28,15 @@ import java.util.Properties;
  */
 class ServletConfigImpl implements ServletConfig
 {
-    private final static Properties EMPTY = new Properties();
     private final String alias;
     private final ServletContextImpl servletContext;
     private final Properties initParams;
 
-    ServletConfigImpl(String alias, ServletContextImpl servletContext, Dictionary initParams)
+    ServletConfigImpl(String alias, ServletContextImpl servletContext, Properties initParams)
     {
         this.alias = alias;
         this.servletContext = servletContext;
-
-        if (initParams == null)
-        {
-            this.initParams = EMPTY;
-        }
-        else
-        {
-            this.initParams = new Properties();
-
-            Enumeration enumeration = initParams.keys();
-            while (enumeration.hasMoreElements())
-            {
-                Object key = enumeration.nextElement();
-                this.initParams.put(key, initParams.get(key));
-            }
-        }
+        this.initParams = initParams;
     }
 
     public String getServletName()

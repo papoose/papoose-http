@@ -24,9 +24,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.security.AccessController;
 import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,6 +50,7 @@ public class HttpServiceImpl implements HttpService
     private final Object lock = new Object();
     private final Properties mime;
     private final Map<HttpContext, ServletContextImpl> contexts = new HashMap<HttpContext, ServletContextImpl>();
+    private final static Set<Servlet> SERVLETS = new HashSet<Servlet>();
     private final Map<String, ServletRegistration> registrations = new HashMap<String, ServletRegistration>();
     private final BundleContext context;
     private final ServletDispatcher dispatcher;
@@ -73,11 +77,12 @@ public class HttpServiceImpl implements HttpService
     /**
      * Start the HTTP service
      */
-    public void start() {}
+    public void start()
+    {}
 
     /**
      * Stop the HTTP service.
-     *
+     * <p/>
      * This method assumes that the service registration has been removed.
      */
     public void stop()
@@ -94,26 +99,47 @@ public class HttpServiceImpl implements HttpService
     {
         LOGGER.entering(CLASS_NAME, "registerServlet", new Object[]{ alias, servlet, initParams, httpContext });
 
+        Properties p;
+        if (initParams == null)
+        {
+            p = EMPTY_PARAMS;
+        }
+        else
+        {
+            p = new Properties();
+
+            Enumeration enumeration = initParams.keys();
+            while (enumeration.hasMoreElements())
+            {
+                Object key = enumeration.nextElement();
+                p.put(key, initParams.get(key));
+            }
+        }
+
         ServletRegistration registration;
         ServletContextImpl servletContext;
         synchronized (lock)
         {
+            if (SERVLETS.contains(servlet)) throw new ServletException("Unique instances are required for each registration");
+
+            SERVLETS.add(servlet);
+
             if (registrations.containsKey(alias)) throw new NamespaceException("Alias " + alias + " already registered");
 
             if (httpContext == null) httpContext = createDefaultHttpContext();
 
-            registration = new ServletRegistration(alias, servlet, httpContext);
-            registrations.put(alias, registration);
-
             servletContext = contexts.get(httpContext);
-            if (servletContext == null) contexts.put(httpContext, servletContext = new ServletContextImpl(httpContext));
+            if (servletContext == null) contexts.put(httpContext, servletContext = new ServletContextImpl(alias, httpContext, dispatcher));
+
+            registration = new ServletRegistration(alias, servlet, servletContext, p);
+            registrations.put(alias, registration);
 
             servletContext.incrementReferenceCount();
         }
 
         try
         {
-            servlet.init(new ServletConfigImpl(alias, servletContext, initParams));
+            servlet.init(new ServletConfigImpl(alias, servletContext, p));
 
             dispatcher.register(registration);
         }
@@ -125,7 +151,11 @@ public class HttpServiceImpl implements HttpService
             {
                 servletContext = contexts.get(httpContext);
                 servletContext.decrementReferenceCount();
-                if (servletContext.getReferenceCount() == 0) contexts.remove(registration.getContext());
+                if (servletContext.getReferenceCount() == 0) contexts.remove(registration.getHttpContext());
+
+                SERVLETS.remove(servlet);
+
+                registrations.remove(alias);
             }
 
             LOGGER.throwing(CLASS_NAME, "registerServlet", t);
@@ -171,10 +201,12 @@ public class HttpServiceImpl implements HttpService
 
             if (registration == null) return;
 
-            ServletContextImpl servletContext = contexts.get(registration.getContext());
+            ServletContextImpl servletContext = registration.getContext();
 
             servletContext.decrementReferenceCount();
-            if (servletContext.getReferenceCount() == 0) contexts.remove(registration.getContext());
+            if (servletContext.getReferenceCount() == 0) contexts.remove(registration.getHttpContext());
+
+            SERVLETS.remove(registration.getServlet());
         }
 
         try

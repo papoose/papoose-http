@@ -18,6 +18,8 @@ package org.papoose.http;
 
 import javax.servlet.Servlet;
 
+import java.util.Dictionary;
+
 import org.osgi.service.http.HttpContext;
 
 
@@ -28,18 +30,25 @@ class ServletRegistration
 {
     private final String alias;
     private final Servlet servlet;
-    private final HttpContext context;
+    private final ServletContextImpl context;
+    private final Dictionary initParams;
 
-    ServletRegistration(String alias, Servlet servlet, HttpContext context)
+    ServletRegistration(String alias, Servlet servlet, ServletContextImpl context, Dictionary initParams)
     {
         this.alias = ("/".equals(alias) ? "" : alias);
         this.servlet = servlet;
         this.context = context;
+        this.initParams = initParams;
     }
 
-    public HttpContext getContext()
+    public ServletContextImpl getContext()
     {
         return context;
+    }
+
+    public HttpContext getHttpContext()
+    {
+        return context.getHttpContext();
     }
 
     public String getAlias()
@@ -50,6 +59,11 @@ class ServletRegistration
     public Servlet getServlet()
     {
         return servlet;
+    }
+
+    public Dictionary getInitParams()
+    {
+        return initParams;
     }
 
     @Override
@@ -67,5 +81,13 @@ class ServletRegistration
     public int hashCode()
     {
         return alias.hashCode();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "ServletRegistration{" +
+               "alias='" + alias + '\'' +
+               '}';
     }
 }

@@ -16,8 +16,7 @@
  */
 package org.papoose.tck.http.servlets;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
+import javax.servlet.GenericServlet;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -34,20 +33,8 @@ import java.util.TreeSet;
 /**
  * @version $Revision: $ $Date: $
  */
-public class ParameterTestServlet implements Servlet
+public class ParameterTestServlet extends GenericServlet
 {
-    private ServletConfig config;
-
-    public void init(ServletConfig config) throws ServletException
-    {
-        this.config = config;
-    }
-
-    public ServletConfig getServletConfig()
-    {
-        return config;
-    }
-
     public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException
     {
         HttpServletRequest request = (HttpServletRequest) req;
@@ -78,10 +65,6 @@ public class ParameterTestServlet implements Servlet
 
     public String getServletInfo()
     {
-        return "Test servlet 1";
-    }
-
-    public void destroy()
-    {
+        return ParameterTestServlet.class.getName();
     }
 }

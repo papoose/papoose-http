@@ -16,8 +16,11 @@
  */
 package org.papoose.http;
 
-import javax.servlet.ServletConfig;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,13 +40,7 @@ public class ServletDispatcher extends HttpServlet
     private final static Logger LOGGER = Logger.getLogger(CLASS_NAME);
     private final List<ServletRegistration> registrations = new CopyOnWriteArrayList<ServletRegistration>();
 
-  @Override
-  public void init(ServletConfig config) throws ServletException
-  {
-    super.init(config);    //Todo change body of overridden methods use File | Settings | File Templates.
-  }
-
-  @Override
+    @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
         String path = req.getPathInfo();
@@ -54,8 +51,10 @@ public class ServletDispatcher extends HttpServlet
             {
                 if (path.equals(registration.getAlias()))
                 {
-                    if (registration.getContext().handleSecurity(req, resp))
+                    if (registration.getHttpContext().handleSecurity(req, resp))
                     {
+                        ServletContextImpl.insertInitParams(registration.getInitParams());
+
                         try
                         {
                             registration.getServlet().service(req, resp);
@@ -78,6 +77,10 @@ public class ServletDispatcher extends HttpServlet
                             LOGGER.log(Level.WARNING, "Problems calling ", t);
                             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                             return;
+                        }
+                        finally
+                        {
+                            ServletContextImpl.insertInitParams(null);
                         }
                     }
                     else
@@ -109,5 +112,157 @@ public class ServletDispatcher extends HttpServlet
     void clear()
     {
         registrations.clear();
+    }
+
+    public ServletContext getContext(String uripath)
+    {
+        LOGGER.entering(CLASS_NAME, "getContext", uripath);
+
+        while (true)
+        {
+            for (ServletRegistration registration : registrations)
+            {
+                if (uripath.equals(registration.getAlias()))
+                {
+                    ServletContext context = registration.getContext();
+
+                    LOGGER.exiting(CLASS_NAME, "getContext", context);
+
+                    return context;
+                }
+            }
+
+            uripath = uripath.substring(0, Math.max(0, uripath.length() - 1));
+            int index = uripath.lastIndexOf('/');
+            if (index == -1) break;
+            uripath = uripath.substring(0, index);
+        }
+
+        LOGGER.exiting(CLASS_NAME, "getContext", null);
+
+        return null;
+    }
+
+    RequestDispatcher getRequestDispatcher(String path)
+    {
+        LOGGER.entering(CLASS_NAME, "getRequestDispatcher", path);
+
+        while (true)
+        {
+            for (final ServletRegistration registration : registrations)
+            {
+                if (path.equals(registration.getAlias()))
+                {
+                    RequestDispatcher dispatcher = new RequestDispatcher()
+                    {
+                        public void forward(ServletRequest request, ServletResponse response) throws ServletException, IOException
+                        {
+                            HttpServletRequest req = (HttpServletRequest) request;
+                            HttpServletResponse resp = (HttpServletResponse) response;
+
+                            if (registration.getHttpContext().handleSecurity(req, resp))
+                            {
+                                ServletContextImpl.insertInitParams(registration.getInitParams());
+
+                                try
+                                {
+                                    registration.getServlet().service(req, resp);
+                                }
+                                catch (ServletException e)
+                                {
+                                    throw e;
+                                }
+                                catch (IOException e)
+                                {
+                                    throw e;
+                                }
+                                catch (ResourceNotFoundException e)
+                                {
+                                    if (LOGGER.isLoggable(Level.FINEST)) LOGGER.finest("Registration at " + registration.getAlias() + " has no resource");
+                                }
+                                catch (Throwable t)
+                                {
+                                    LOGGER.log(Level.WARNING, "Problems calling ", t);
+                                    resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                }
+                                finally
+                                {
+                                    ServletContextImpl.insertInitParams(null);
+                                }
+                            }
+                        }
+
+                        public void include(ServletRequest request, ServletResponse response) throws ServletException, IOException
+                        {
+                            HttpServletRequest req = (HttpServletRequest) request;
+                            HttpServletResponse resp = (HttpServletResponse) response;
+
+                            if (registration.getHttpContext().handleSecurity(req, resp))
+                            {
+                                ServletContextImpl.insertInitParams(registration.getInitParams());
+
+                                try
+                                {
+                                    registration.getServlet().service(req, resp);
+                                }
+                                catch (ServletException e)
+                                {
+                                    throw e;
+                                }
+                                catch (IOException e)
+                                {
+                                    throw e;
+                                }
+                                catch (ResourceNotFoundException e)
+                                {
+                                    if (LOGGER.isLoggable(Level.FINEST)) LOGGER.finest("Registration at " + registration.getAlias() + " has no resource");
+                                }
+                                catch (Throwable t)
+                                {
+                                    LOGGER.log(Level.WARNING, "Problems calling ", t);
+                                    resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                }
+                                finally
+                                {
+                                    ServletContextImpl.insertInitParams(null);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public String toString()
+                        {
+                            return "RequestDispatcher{" +
+                                   "r=" + registration +
+                                   '}';
+                        }
+                    };
+
+                    LOGGER.exiting(CLASS_NAME, "getNamedDispatcher", dispatcher);
+
+                    return dispatcher;
+                }
+            }
+
+            path = path.substring(0, Math.max(0, path.length() - 1));
+            int index = path.lastIndexOf('/');
+            if (index == -1) break;
+            path = path.substring(0, index);
+        }
+
+        LOGGER.exiting(CLASS_NAME, "getNamedDispatcher", null);
+
+        return null;
+    }
+
+    RequestDispatcher getNamedDispatcher(String name)
+    {
+        LOGGER.entering(CLASS_NAME, "getNamedDispatcher", name);
+
+        RequestDispatcher dispatcher = getRequestDispatcher(name);
+
+        LOGGER.exiting(CLASS_NAME, "getNamedDispatcher", dispatcher);
+
+        return dispatcher;
     }
 }
