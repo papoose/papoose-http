@@ -32,78 +32,35 @@ import java.util.Dictionary;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import static org.ops4j.pax.exam.CoreOptions.equinox;
-import static org.ops4j.pax.exam.CoreOptions.felix;
-import static org.ops4j.pax.exam.CoreOptions.knopflerfish;
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.ops4j.pax.exam.CoreOptions.options;
-import static org.ops4j.pax.exam.CoreOptions.provision;
 import org.ops4j.pax.exam.Inject;
-import static org.ops4j.pax.exam.MavenUtils.asInProject;
-import org.ops4j.pax.exam.Option;
-import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.compendiumProfile;
-import org.ops4j.pax.exam.junit.Configuration;
-import org.ops4j.pax.exam.junit.JUnit4TestRunner;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
-import org.papoose.http.HttpServer;
-import org.papoose.http.HttpServiceImpl;
-import org.papoose.http.JettyHttpServer;
-import org.papoose.tck.http.servlets.InitParameterTestServlet;
 import org.papoose.tck.http.servlets.ParameterTestServlet;
+import org.papoose.tck.http.servlets.ServletConfigInitParameterTestServlet;
+import org.papoose.tck.http.servlets.ServletContextInitParameterTestServlet;
 
 
 /**
  * @version $Revision: $ $Date: $
  */
-@RunWith(JUnit4TestRunner.class)
-public class HttpServiceImplTest
+public abstract class BaseHttpServiceImplTest
 {
     @Inject
-    private BundleContext bundleContext = null;
-    private HttpServer server;
-    private HttpServiceImpl httpService;
-    private ServiceRegistration registration;
-
-    @Configuration
-    public static Option[] configure()
-    {
-        return options(
-                equinox(),
-                felix(),
-                knopflerfish(),
-                // papoose(),
-                compendiumProfile(),
-                // vmOption("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
-                // this is necessary to let junit runner not timeout the remote process before attaching debugger
-                // setting timeout to 0 means wait as long as the remote service comes available.
-                // starting with version 0.5.0 of PAX Exam this is no longer required as by default the framework tests
-                // will not be triggered till the framework is not started
-                // waitForFrameworkStartup()
-                provision(
-                        mavenBundle().groupId("javax.servlet").artifactId("com.springsource.javax.servlet").version(asInProject()),
-                        mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty").version(asInProject()),
-                        mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty-util").version(asInProject()),
-                        mavenBundle().groupId("org.papoose.cmpn").artifactId("papoose-http").version(asInProject())
-                )
-        );
-    }
+    protected BundleContext bundleContext = null;
 
     @Test
     public void testServletRegistrations() throws Exception
     {
+        assertTrue(false);
+
         ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
         HttpService service = (HttpService) bundleContext.getService(sr);
 
@@ -164,7 +121,7 @@ public class HttpServiceImplTest
     }
 
     @Test
-    public void testServletInitParameters() throws Exception
+    public void testServletConfigInitParameters() throws Exception
     {
         ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
         HttpService service = (HttpService) bundleContext.getService(sr);
@@ -174,7 +131,39 @@ public class HttpServiceImplTest
         init.put("b", "2");
         init.put("c", "3");
 
-        service.registerServlet("/a/b", new InitParameterTestServlet(), init, null);
+        service.registerServlet("/a/b", new ServletConfigInitParameterTestServlet(), init, null);
+
+        URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class");
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+
+        assertEquals("#a:1#b:2#c:3#", br.readLine());
+
+        service.unregister("/a/b");
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
+        }
+        catch (IOException e)
+        {
+        }
+    }
+
+    @Test
+    public void testServletContextInitParameters() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        Dictionary<Object, Object> init = new Properties();
+        init.put("a", "1");
+        init.put("b", "2");
+        init.put("c", "3");
+
+        service.registerServlet("/a/b", new ServletContextInitParameterTestServlet(), init, null);
 
         URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class");
 
@@ -229,7 +218,7 @@ public class HttpServiceImplTest
 
             public URL getResource(String name)
             {
-                return HttpServiceImplTest.class.getResource(name);
+                return BaseHttpServiceImplTest.class.getResource(name);
             }
 
             public String getMimeType(String name)
@@ -278,7 +267,7 @@ public class HttpServiceImplTest
             {
                 name = name.replaceAll("^\\./", "");
                 name = name.replaceAll("/\\./", "/");
-                return HttpServiceImplTest.class.getResource(name);
+                return BaseHttpServiceImplTest.class.getResource(name);
             }
 
             public String getMimeType(String name)
@@ -308,31 +297,5 @@ public class HttpServiceImplTest
         catch (IOException e)
         {
         }
-    }
-
-    @Before
-    public void startup()
-    {
-        Properties properties = new Properties();
-
-        properties.setProperty(HttpServer.HTTP_PORT, "8080");
-
-        server = JettyHttpServer.generate(properties);
-
-        server.start();
-
-        httpService = new HttpServiceImpl(bundleContext, server.getServletDispatcher());
-
-        httpService.start();
-
-        registration = bundleContext.registerService(HttpService.class.getName(), httpService, null);
-    }
-
-    @After
-    public void teardown()
-    {
-        registration.unregister();
-        httpService.stop();
-        server.stop();
     }
 }

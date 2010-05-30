@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
-import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Map;
@@ -41,16 +40,14 @@ class ServletContextImpl implements ServletContext
 {
     private final static String CLASS_NAME = ServletContextImpl.class.getName();
     private final static Logger LOGGER = Logger.getLogger(CLASS_NAME);
-    private final static ThreadLocal<Dictionary> INIT_PARAMS = new ThreadLocal<Dictionary>();
+    private final static ThreadLocal<ServletRegistration> CURRENT_SERVLET = new ThreadLocal<ServletRegistration>();
     private final Map<String, Object> attributes = new Hashtable<String, Object>();
-    private final String alias;
     private final HttpContext httpContext;
     private final ServletDispatcher servletDispatcher;
     private int referenceCount;
 
-    ServletContextImpl(String alias, HttpContext httpContext, ServletDispatcher servletDispatcher)
+    ServletContextImpl(HttpContext httpContext, ServletDispatcher servletDispatcher)
     {
-        this.alias = alias;
         this.httpContext = httpContext;
         this.servletDispatcher = servletDispatcher;
     }
@@ -77,7 +74,7 @@ class ServletContextImpl implements ServletContext
 
     public String getContextPath()
     {
-        return alias;
+        return CURRENT_SERVLET.get().getAlias();
     }
 
     public ServletContext getContext(String uripath)
@@ -187,12 +184,12 @@ class ServletContextImpl implements ServletContext
 
     public String getInitParameter(String name)
     {
-        return (String) INIT_PARAMS.get().get(name);
+        return (String) CURRENT_SERVLET.get().getInitParams().get(name);
     }
 
     public Enumeration getInitParameterNames()
     {
-        return INIT_PARAMS.get().keys();
+        return CURRENT_SERVLET.get().getInitParams().keys();
     }
 
     public Object getAttribute(String name)
@@ -220,8 +217,8 @@ class ServletContextImpl implements ServletContext
         return null;
     }
 
-    static void insertInitParams(Dictionary initParams)
+    static void insertCurrentServlet(ServletRegistration initParams)
     {
-        INIT_PARAMS.set(initParams);
+        CURRENT_SERVLET.set(initParams);
     }
 }

@@ -53,7 +53,7 @@ public class ServletDispatcher extends HttpServlet
                 {
                     if (registration.getHttpContext().handleSecurity(req, resp))
                     {
-                        ServletContextImpl.insertInitParams(registration.getInitParams());
+                        ServletContextImpl.insertCurrentServlet(registration);
 
                         try
                         {
@@ -80,7 +80,7 @@ public class ServletDispatcher extends HttpServlet
                         }
                         finally
                         {
-                            ServletContextImpl.insertInitParams(null);
+                            ServletContextImpl.insertCurrentServlet(null);
                         }
                     }
                     else
@@ -162,7 +162,7 @@ public class ServletDispatcher extends HttpServlet
 
                             if (registration.getHttpContext().handleSecurity(req, resp))
                             {
-                                ServletContextImpl.insertInitParams(registration.getInitParams());
+                                ServletContextImpl.insertCurrentServlet(registration);
 
                                 try
                                 {
@@ -187,7 +187,7 @@ public class ServletDispatcher extends HttpServlet
                                 }
                                 finally
                                 {
-                                    ServletContextImpl.insertInitParams(null);
+                                    ServletContextImpl.insertCurrentServlet(null);
                                 }
                             }
                         }
@@ -199,7 +199,7 @@ public class ServletDispatcher extends HttpServlet
 
                             if (registration.getHttpContext().handleSecurity(req, resp))
                             {
-                                ServletContextImpl.insertInitParams(registration.getInitParams());
+                                ServletContextImpl.insertCurrentServlet(registration);
 
                                 try
                                 {
@@ -224,7 +224,7 @@ public class ServletDispatcher extends HttpServlet
                                 }
                                 finally
                                 {
-                                    ServletContextImpl.insertInitParams(null);
+                                    ServletContextImpl.insertCurrentServlet(null);
                                 }
                             }
                         }

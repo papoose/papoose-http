@@ -129,7 +129,7 @@ public class HttpServiceImpl implements HttpService
             if (httpContext == null) httpContext = createDefaultHttpContext();
 
             servletContext = contexts.get(httpContext);
-            if (servletContext == null) contexts.put(httpContext, servletContext = new ServletContextImpl(alias, httpContext, dispatcher));
+            if (servletContext == null) contexts.put(httpContext, servletContext = new ServletContextImpl(httpContext, dispatcher));
 
             registration = new ServletRegistration(alias, servlet, servletContext, p);
             registrations.put(alias, registration);

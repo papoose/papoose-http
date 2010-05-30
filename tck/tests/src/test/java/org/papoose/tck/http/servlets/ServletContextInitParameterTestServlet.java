@@ -32,14 +32,14 @@ import java.util.TreeSet;
 /**
  * @version $Revision: $ $Date: $
  */
-public class InitParameterTestServlet extends GenericServlet
+public class ServletContextInitParameterTestServlet extends GenericServlet
 {
     public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException
     {
         HttpServletResponse response = (HttpServletResponse) res;
         BufferedWriter stream = new BufferedWriter(new OutputStreamWriter(response.getOutputStream()));
 
-        Enumeration<String> enumeration = getServletConfig().getInitParameterNames();
+        Enumeration<String> enumeration = getServletConfig().getServletContext().getInitParameterNames();
         SortedSet<String> names = new TreeSet<String>();
         while (enumeration.hasMoreElements())
         {
@@ -48,7 +48,7 @@ public class InitParameterTestServlet extends GenericServlet
 
         for (String name : names)
         {
-            String value = getServletConfig().getInitParameter(name);
+            String value = getServletConfig().getServletContext().getInitParameter(name);
             stream.write("#");
             stream.write(name);
             stream.write(":");
@@ -63,6 +63,6 @@ public class InitParameterTestServlet extends GenericServlet
 
     public String getServletInfo()
     {
-        return InitParameterTestServlet.class.getName();
+        return ServletContextInitParameterTestServlet.class.getName();
     }
 }
