@@ -45,7 +45,7 @@ public class FelixHttpServiceImplTest extends BaseHttpServiceImplTest
                 knopflerfish(),
                 // papoose(),
                 compendiumProfile(),
-                //                 vmOption("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
+                // vmOption("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
                 // this is necessary to let junit runner not timeout the remote process before attaching debugger
                 // setting timeout to 0 means wait as long as the remote service comes available.
                 // starting with version 0.5.0 of PAX Exam this is no longer required as by default the framework tests

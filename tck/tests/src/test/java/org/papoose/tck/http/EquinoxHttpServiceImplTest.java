@@ -21,12 +21,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Dictionary;
 import java.util.Properties;
 
-import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.ops4j.pax.exam.CoreOptions.equinox;
@@ -38,28 +37,21 @@ import static org.ops4j.pax.exam.CoreOptions.provision;
 import static org.ops4j.pax.exam.MavenUtils.asInProject;
 import org.ops4j.pax.exam.Option;
 import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.compendiumProfile;
+import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.vmOption;
 import org.ops4j.pax.exam.junit.Configuration;
 import org.ops4j.pax.exam.junit.JUnit4TestRunner;
 import org.osgi.framework.ServiceReference;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.http.HttpService;
 
-import org.papoose.http.HttpServer;
-import org.papoose.http.HttpServiceImpl;
-import org.papoose.http.JettyHttpServer;
-import org.papoose.tck.http.servlets.PrintTestServlet;
+import org.papoose.tck.http.servlets.ServletContextInitParameterTestServlet;
 
 
 /**
  * @version $Revision: $ $Date: $
  */
 @RunWith(JUnit4TestRunner.class)
-public class PapooseHttpServiceImplTest extends BaseHttpServiceImplTest
+public class EquinoxHttpServiceImplTest extends BaseHttpServiceImplTest
 {
-    private HttpServer server;
-    private HttpServiceImpl httpService;
-    private ServiceRegistration registration;
-
     @Configuration
     public static Option[] configure()
     {
@@ -69,7 +61,8 @@ public class PapooseHttpServiceImplTest extends BaseHttpServiceImplTest
                 knopflerfish(),
                 // papoose(),
                 compendiumProfile(),
-                // vmOption("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
+                vmOption("-Dorg.osgi.service.http.port=8080"),
+                // vmOption("-Dorg.osgi.service.http.port=8080 -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
                 // this is necessary to let junit runner not timeout the remote process before attaching debugger
                 // setting timeout to 0 means wait as long as the remote service comes available.
                 // starting with version 0.5.0 of PAX Exam this is no longer required as by default the framework tests
@@ -77,36 +70,8 @@ public class PapooseHttpServiceImplTest extends BaseHttpServiceImplTest
                 // waitForFrameworkStartup()
                 provision(
                         mavenBundle().groupId("javax.servlet").artifactId("com.springsource.javax.servlet").version(asInProject()),
-                        mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty").version(asInProject()),
-                        mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty-util").version(asInProject()),
-                        mavenBundle().groupId("org.papoose.cmpn").artifactId("papoose-http").version(asInProject())
+                        mavenBundle().groupId("org.eclipse.equinox").artifactId("http").version(asInProject())
                 )
         );
-    }
-
-    @Before
-    public void startup()
-    {
-        Properties properties = new Properties();
-
-        properties.setProperty(HttpServer.HTTP_PORT, "8080");
-
-        server = JettyHttpServer.generate(properties);
-
-        server.start();
-
-        httpService = new HttpServiceImpl(bundleContext, server.getServletDispatcher());
-
-        httpService.start();
-
-        registration = bundleContext.registerService(HttpService.class.getName(), httpService, null);
-    }
-
-    @After
-    public void teardown()
-    {
-        registration.unregister();
-        httpService.stop();
-        server.stop();
     }
 }

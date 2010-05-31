@@ -43,7 +43,10 @@ import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
+import org.papoose.tck.http.servlets.AttributeInitTestServlet;
+import org.papoose.tck.http.servlets.AttributePrintTestServlet;
 import org.papoose.tck.http.servlets.ParameterTestServlet;
+import org.papoose.tck.http.servlets.PrintTestServlet;
 import org.papoose.tck.http.servlets.ServletConfigInitParameterTestServlet;
 import org.papoose.tck.http.servlets.ServletContextInitParameterTestServlet;
 
@@ -185,6 +188,115 @@ public abstract class BaseHttpServiceImplTest
     }
 
     @Test
+    public void testSharedHttpContext() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        HttpContext sharedContext = service.createDefaultHttpContext();
+        HttpContext loneContext = service.createDefaultHttpContext();
+
+        service.registerServlet("/a/init", new AttributeInitTestServlet(), null, sharedContext);
+        service.registerServlet("/a/print", new AttributePrintTestServlet(), null, sharedContext);
+        service.registerServlet("/a/lone", new AttributePrintTestServlet(), null, loneContext);
+
+        URL url = new URL("http://localhost:8080/a/init");
+
+        url.openStream();
+
+        url = new URL("http://localhost:8080/a/print");
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+
+        assertEquals("#a:1#b:2#c:3#", br.readLine());
+
+        url = new URL("http://localhost:8080/a/lone");
+
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+
+        assertEquals("#", br.readLine());
+
+        service.unregister("/a/init");
+        service.unregister("/a/print");
+        service.unregister("/a/lone");
+    }
+
+    @Test
+    public void testOverlappingAliases() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        service.registerServlet("/a", new PrintTestServlet("a"), null, null);
+        service.registerServlet("/a/b", new PrintTestServlet("ab"), null, null);
+        service.registerServlet("/a/b/c", new PrintTestServlet("abc"), null, null);
+
+        URL url = new URL("http://localhost:8080/a");
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("a", br.readLine());
+
+        url = new URL("http://localhost:8080/a/test");
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("a", br.readLine());
+
+        url = new URL("http://localhost:8080/a/b");
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("ab", br.readLine());
+
+        url = new URL("http://localhost:8080/a/b/test");
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("ab", br.readLine());
+
+        url = new URL("http://localhost:8080/a/b/c");
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("abc", br.readLine());
+
+        url = new URL("http://localhost:8080/a/b/c/test");
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("abc", br.readLine());
+
+        service.unregister("/a/b");
+
+        url = new URL("http://localhost:8080/a");
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("a", br.readLine());
+
+        url = new URL("http://localhost:8080/a/test");
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("a", br.readLine());
+
+        url = new URL("http://localhost:8080/a/b");
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("a", br.readLine());
+
+        url = new URL("http://localhost:8080/a/b/test");
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("a", br.readLine());
+
+        url = new URL("http://localhost:8080/a/b/c");
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("abc", br.readLine());
+
+        url = new URL("http://localhost:8080/a/b/c/test");
+        br = new BufferedReader(new InputStreamReader(url.openStream()));
+        assertEquals("abc", br.readLine());
+
+        try
+        {
+            url = new URL("http://localhost:8080/z");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Should not have found anything");
+        }
+        catch (IOException e)
+        {
+        }
+
+        service.unregister("/a");
+        service.unregister("/a/b/c");
+    }
+
+    @Test
     public void testResourceRegistrations() throws Exception
     {
         ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
@@ -227,7 +339,7 @@ public abstract class BaseHttpServiceImplTest
             }
         });
 
-        URL url = new URL("http://localhost:8080/a/b/http/HttpServiceImplTest.class");
+        URL url = new URL("http://localhost:8080/a/b/http/BaseHttpServiceImplTest.class");
 
         DataInputStream reader = new DataInputStream(url.openStream());
 
@@ -276,7 +388,7 @@ public abstract class BaseHttpServiceImplTest
             }
         });
 
-        URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class");
+        URL url = new URL("http://localhost:8080/a/b/BaseHttpServiceImplTest.class");
 
         DataInputStream reader = new DataInputStream(url.openStream());
 
