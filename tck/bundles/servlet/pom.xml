@@ -22,7 +22,7 @@
                     <instructions>
                         <Bundle-SymbolicName>org.papoose.cmpn.tck.servlet</Bundle-SymbolicName>
                         <Bundle-Activator>org.papoose.tck.bundles.servlet.Activator</Bundle-Activator>
-                        <Import-Package>javax.servlet;version="[2.4,3)",javax.servlet.http;version="[2.4,3)",org.osgi.framework;version="[1,2)",org.osgi.service.http;version="[1,2)",org.osgi.util.tracker;version="[1,2)"</Import-Package>
+                        <Import-Package>javax.servlet;version="[2.4,3)",javax.servlet.http;version="[2.4,3)",org.osgi.framework;version="[1,2)",org.osgi.service.http;version="[1.2,2)",org.osgi.util.tracker;version="[1.4,2)"</Import-Package>
                         <Private-Package>org.papoose.tck.bundles.servlet</Private-Package>
                     </instructions>
                 </configuration>
