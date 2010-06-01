@@ -59,9 +59,6 @@ public class EquinoxHttpServiceImplTest extends BaseHttpServiceImplTest
     {
         return options(
                 equinox(),
-                felix(),
-                knopflerfish(),
-                // papoose(),
                 compendiumProfile(),
                 vmOption("-Dorg.osgi.service.http.port=8080"),
                 // v1mOption("-Dorg.osgi.service.http.port=8080 -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
@@ -73,7 +70,6 @@ public class EquinoxHttpServiceImplTest extends BaseHttpServiceImplTest
                 provision(
                         mavenBundle().groupId("javax.servlet").artifactId("com.springsource.javax.servlet").version(asInProject()),
                         mavenBundle().groupId("org.eclipse.equinox").artifactId("http").version(asInProject()),
-                        mavenBundle().groupId("org.eclipse.osgi").artifactId("util").version(asInProject()),
                         mavenBundle().groupId("org.papoose.cmpn.tck.bundles").artifactId("servlet").version(asInProject())
                 )
         );

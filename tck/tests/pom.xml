@@ -91,13 +91,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.eclipse.osgi</groupId>
-            <artifactId>util</artifactId>
-            <version>3.1.200-v20070605</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>jetty</artifactId>
             <scope>test</scope>
