@@ -25,6 +25,7 @@ import java.util.Dictionary;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +41,7 @@ import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.compendiumProfil
 import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.vmOption;
 import org.ops4j.pax.exam.junit.Configuration;
 import org.ops4j.pax.exam.junit.JUnit4TestRunner;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
 
@@ -62,7 +64,7 @@ public class EquinoxHttpServiceImplTest extends BaseHttpServiceImplTest
                 // papoose(),
                 compendiumProfile(),
                 vmOption("-Dorg.osgi.service.http.port=8080"),
-                // vmOption("-Dorg.osgi.service.http.port=8080 -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
+                // v1mOption("-Dorg.osgi.service.http.port=8080 -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
                 // this is necessary to let junit runner not timeout the remote process before attaching debugger
                 // setting timeout to 0 means wait as long as the remote service comes available.
                 // starting with version 0.5.0 of PAX Exam this is no longer required as by default the framework tests
@@ -70,8 +72,48 @@ public class EquinoxHttpServiceImplTest extends BaseHttpServiceImplTest
                 // waitForFrameworkStartup()
                 provision(
                         mavenBundle().groupId("javax.servlet").artifactId("com.springsource.javax.servlet").version(asInProject()),
-                        mavenBundle().groupId("org.eclipse.equinox").artifactId("http").version(asInProject())
+                        mavenBundle().groupId("org.eclipse.equinox").artifactId("http").version(asInProject()),
+                        mavenBundle().groupId("org.eclipse.osgi").artifactId("util").version(asInProject()),
+                        mavenBundle().groupId("org.papoose.cmpn.tck.bundles").artifactId("servlet").version(asInProject())
                 )
         );
     }
+
+    @Test
+    public void testBundleUnregsiter() throws Exception
+    {
+        Bundle test = null;
+        for (Bundle b : bundleContext.getBundles())
+        {
+            if ("org.papoose.cmpn.tck.servlet".equals(b.getSymbolicName()))
+            {
+                test = b;
+                break;
+            }
+        }
+
+        assertNotNull(test);
+
+        test.start();
+
+        URL url = new URL("http://localhost:8080/bundle");
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+
+        assertEquals("HIT", br.readLine());
+
+        test.stop();
+        test.uninstall();
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
+        }
+        catch (IOException e)
+        {
+        }
+    }
+
 }

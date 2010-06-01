@@ -25,6 +25,7 @@ import java.util.Properties;
 
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,16 +39,16 @@ import static org.ops4j.pax.exam.CoreOptions.provision;
 import static org.ops4j.pax.exam.MavenUtils.asInProject;
 import org.ops4j.pax.exam.Option;
 import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.compendiumProfile;
+import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.vmOption;
 import org.ops4j.pax.exam.junit.Configuration;
 import org.ops4j.pax.exam.junit.JUnit4TestRunner;
-import org.osgi.framework.ServiceReference;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.http.HttpService;
 
 import org.papoose.http.HttpServer;
 import org.papoose.http.HttpServiceImpl;
 import org.papoose.http.JettyHttpServer;
-import org.papoose.tck.http.servlets.PrintTestServlet;
 
 
 /**
@@ -79,9 +80,47 @@ public class PapooseHttpServiceImplTest extends BaseHttpServiceImplTest
                         mavenBundle().groupId("javax.servlet").artifactId("com.springsource.javax.servlet").version(asInProject()),
                         mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty").version(asInProject()),
                         mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty-util").version(asInProject()),
-                        mavenBundle().groupId("org.papoose.cmpn").artifactId("papoose-http").version(asInProject())
+                        mavenBundle().groupId("org.papoose.cmpn").artifactId("papoose-http").version(asInProject()),
+                        mavenBundle().groupId("org.papoose.cmpn.tck.bundles").artifactId("servlet").version(asInProject())
                 )
         );
+    }
+
+    @Test
+    public void testBundleUnregsiter() throws Exception
+    {
+        Bundle test = null;
+        for (Bundle b : bundleContext.getBundles())
+        {
+            if ("org.papoose.cmpn.tck.servlet".equals(b.getSymbolicName()))
+            {
+                test = b;
+                break;
+            }
+        }
+
+        assertNotNull(test);
+
+        test.start();
+
+        URL url = new URL("http://localhost:8080/bundle");
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+
+        assertEquals("HIT", br.readLine());
+
+        test.stop();
+        test.uninstall();
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
+        }
+        catch (IOException e)
+        {
+        }
     }
 
     @Before

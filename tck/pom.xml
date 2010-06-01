@@ -10,9 +10,10 @@
     <groupId>org.papoose.cmpn.tck</groupId>
     <artifactId>tck</artifactId>
     <packaging>pom</packaging>
-    <name>Papoose :: OSGi Compatibility Tests</name>
+    <name>Papoose :: OSGi TCK</name>
 
     <modules>
+        <module>bundles</module>
         <module>tests</module>
     </modules>
 
@@ -94,6 +95,12 @@
             <dependency>
                 <groupId>org.papoose.cmpn</groupId>
                 <artifactId>papoose-http</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.papoose.cmpn.tck.bundles</groupId>
+                <artifactId>servlet</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

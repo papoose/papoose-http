@@ -33,7 +33,10 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceFactory;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
@@ -42,7 +45,7 @@ import org.osgi.service.http.NamespaceException;
 /**
  * @version $Revision: $ $Date: $
  */
-public class HttpServiceImpl implements HttpService
+public class HttpServiceImpl implements ServiceFactory
 {
     private final static String CLASS_NAME = HttpServiceImpl.class.getName();
     private final static Logger LOGGER = Logger.getLogger(CLASS_NAME);
@@ -95,7 +98,7 @@ public class HttpServiceImpl implements HttpService
     /**
      * {@inheritDoc}
      */
-    public void registerServlet(String alias, Servlet servlet, Dictionary initParams, HttpContext httpContext) throws ServletException, NamespaceException
+    void registerServlet(String alias, Servlet servlet, Dictionary initParams, HttpContext httpContext) throws ServletException, NamespaceException
     {
         LOGGER.entering(CLASS_NAME, "registerServlet", new Object[]{ alias, servlet, initParams, httpContext });
 
@@ -139,6 +142,8 @@ public class HttpServiceImpl implements HttpService
 
         try
         {
+            ServletContextImpl.insertCurrentServlet(registration);
+
             servlet.init(new ServletConfigImpl(alias, servletContext, p));
 
             dispatcher.register(registration);
@@ -163,6 +168,10 @@ public class HttpServiceImpl implements HttpService
             if (t instanceof ServletException) throw (ServletException) t;
             throw (RuntimeException) t;
         }
+        finally
+        {
+            ServletContextImpl.insertCurrentServlet(null);
+        }
 
         LOGGER.exiting(CLASS_NAME, "registerServlet");
     }
@@ -171,7 +180,7 @@ public class HttpServiceImpl implements HttpService
     /**
      * {@inheritDoc}
      */
-    public void registerResources(String alias, String name, HttpContext httpContext) throws NamespaceException
+    void registerResources(String alias, String name, HttpContext httpContext) throws NamespaceException
     {
         LOGGER.entering(CLASS_NAME, "registerResources", new Object[]{ alias, name, httpContext });
 
@@ -190,7 +199,7 @@ public class HttpServiceImpl implements HttpService
     /**
      * {@inheritDoc}
      */
-    public void unregister(String alias)
+    void unregister(String alias)
     {
         LOGGER.entering(CLASS_NAME, "unregister", alias);
 
@@ -226,7 +235,7 @@ public class HttpServiceImpl implements HttpService
     /**
      * {@inheritDoc}
      */
-    public HttpContext createDefaultHttpContext()
+    HttpContext createDefaultHttpContext()
     {
         LOGGER.entering(CLASS_NAME, "createDefaultHttpContext");
 
@@ -253,5 +262,15 @@ public class HttpServiceImpl implements HttpService
         LOGGER.exiting(CLASS_NAME, "createDefaultHttpContext", defaultContext);
 
         return defaultContext;
+    }
+
+    public Object getService(Bundle bundle, ServiceRegistration registration)
+    {
+        return new HttpServiceProxy(this);
+    }
+
+    public void ungetService(Bundle bundle, ServiceRegistration registration, Object service)
+    {
+        ((HttpServiceProxy) service).unregister();
     }
 }

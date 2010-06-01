@@ -16,6 +16,16 @@
  */
 package org.papoose.tck.http;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.ops4j.pax.exam.CoreOptions.equinox;
 import static org.ops4j.pax.exam.CoreOptions.felix;
@@ -26,8 +36,10 @@ import static org.ops4j.pax.exam.CoreOptions.provision;
 import static org.ops4j.pax.exam.MavenUtils.asInProject;
 import org.ops4j.pax.exam.Option;
 import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.compendiumProfile;
+import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.vmOption;
 import org.ops4j.pax.exam.junit.Configuration;
 import org.ops4j.pax.exam.junit.JUnit4TestRunner;
+import org.osgi.framework.Bundle;
 
 
 /**
@@ -52,8 +64,47 @@ public class FelixHttpServiceImplTest extends BaseHttpServiceImplTest
                 // will not be triggered till the framework is not started
                 // waitForFrameworkStartup()
                 provision(
-                        mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.http.jetty").version(asInProject())
+                        mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.http.jetty").version(asInProject()),
+                        mavenBundle().groupId("org.papoose.cmpn.tck.bundles").artifactId("servlet").version(asInProject())
                 )
         );
     }
+
+    @Test
+    public void testBundleUnregsiter() throws Exception
+    {
+        Bundle test = null;
+        for (Bundle b : bundleContext.getBundles())
+        {
+            if ("org.papoose.cmpn.tck.servlet".equals(b.getSymbolicName()))
+            {
+                test = b;
+                break;
+            }
+        }
+
+        assertNotNull(test);
+
+        test.start();
+
+        URL url = new URL("http://localhost:8080/bundle");
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+
+        assertEquals("HIT", br.readLine());
+
+        test.stop();
+        test.uninstall();
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
+        }
+        catch (IOException e)
+        {
+        }
+    }
+
 }

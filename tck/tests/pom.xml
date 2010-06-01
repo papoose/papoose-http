@@ -8,7 +8,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>http-tests</artifactId>
-    <name>Papoose :: OSGi Compatibility Tests :: Tests</name>
+    <name>Papoose :: OSGi TCK :: Tests</name>
     <packaging>jar</packaging>
 
     <build>
@@ -30,6 +30,32 @@
                         <goals>
                             <goal>generate-depends-file</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.papoose.cmpn.tck.bundles</groupId>
+                                    <artifactId>servlet</artifactId>
+                                    <version>${project.version}</version>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>target</outputDirectory>
+                                    <destFileName>bundle.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -61,6 +87,13 @@
             <groupId>org.eclipse.equinox</groupId>
             <artifactId>http</artifactId>
             <version>1.0.100-v20070423</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.osgi</groupId>
+            <artifactId>util</artifactId>
+            <version>3.1.200-v20070605</version>
             <scope>test</scope>
         </dependency>
 
@@ -107,6 +140,12 @@
         <dependency>
             <groupId>org.papoose.cmpn</groupId>
             <artifactId>papoose-http</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.papoose.cmpn.tck.bundles</groupId>
+            <artifactId>servlet</artifactId>
             <scope>test</scope>
         </dependency>
 

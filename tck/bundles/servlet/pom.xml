@@ -1,0 +1,56 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <parent>
+        <groupId>org.papoose.cmpn.tck.bundles</groupId>
+        <artifactId>bundles</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>servlet</artifactId>
+    <packaging>bundle</packaging>
+    <name>Papoose :: OSGi TCK :: Bundles :: Servlet</name>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>org.papoose.cmpn.tck.servlet</Bundle-SymbolicName>
+                        <Bundle-Activator>org.papoose.tck.bundles.servlet.Activator</Bundle-Activator>
+                        <Import-Package>javax.servlet;version="[2.4,3)",javax.servlet.http;version="[2.4,3)",org.osgi.framework;version="[1,2)",org.osgi.service.http;version="[1,2)",org.osgi.util.tracker;version="[1,2)"</Import-Package>
+                        <Private-Package>org.papoose.tck.bundles.servlet</Private-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>com.springsource.javax.servlet</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.compendium</artifactId>
+            <version>4.2.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <version>4.2.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+</project>
