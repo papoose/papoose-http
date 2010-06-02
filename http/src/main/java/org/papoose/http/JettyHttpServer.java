@@ -16,7 +16,7 @@
  */
 package org.papoose.http;
 
-import java.util.Properties;
+import java.util.Dictionary;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -77,20 +77,20 @@ public class JettyHttpServer implements HttpServer
         LOGGER.exiting(CLASS_NAME, "stop");
     }
 
-    public static HttpServer generate(Properties properties)
+    public static HttpServer generate(Dictionary dictionary)
     {
-        LOGGER.entering(CLASS_NAME, "generate", properties);
+        LOGGER.entering(CLASS_NAME, "generate", dictionary);
 
-        JettyHttpServer server = new JettyHttpServer(properties);
+        JettyHttpServer server = new JettyHttpServer(dictionary);
 
         LOGGER.exiting(CLASS_NAME, "generate", server);
 
         return server;
     }
 
-    private JettyHttpServer(Properties properties)
+    private JettyHttpServer(Dictionary properties)
     {
-        int maxThreads = Util.parseInt(properties.getProperty(HTTP_MAX_THREAD_SIZE), 5);
+        int maxThreads = Util.parseInt(properties.get(HTTP_MAX_THREAD_SIZE), 5);
 
         if (LOGGER.isLoggable(Level.CONFIG)) LOGGER.config("Max threads: " + maxThreads);
 
@@ -100,8 +100,8 @@ public class JettyHttpServer implements HttpServer
 
         root.addServlet(new ServletHolder(servletDispatcher), "/*");
 
-        int port = Util.parseInt(properties.getProperty(HTTP_PORT), -1);
-        int securePort = Util.parseInt(properties.getProperty(HTTP_PORT_SECURE), -1);
+        int port = Util.parseInt(properties.get(HTTP_PORT), -1);
+        int securePort = Util.parseInt(properties.get(HTTP_PORT_SECURE), -1);
 
         if (port != -1)
         {
@@ -120,11 +120,11 @@ public class JettyHttpServer implements HttpServer
 
             SslSocketConnector sslConnector = new SslSocketConnector();
 
-            if (properties.containsKey(HTTP_KEYSTORE)) sslConnector.setKeystore(properties.getProperty(HTTP_KEYSTORE));
-            if (properties.containsKey(HTTP_TRUSTSTORE)) sslConnector.setTruststore(properties.getProperty(HTTP_TRUSTSTORE));
-            if (properties.containsKey(HTTP_KEYSTORE_PASSWORD)) sslConnector.setPassword(properties.getProperty(HTTP_KEYSTORE_PASSWORD));
-            if (properties.containsKey(HTTP_TRUSTSTORE_PASSWORD)) sslConnector.setTrustPassword(properties.getProperty(HTTP_TRUSTSTORE_PASSWORD));
-            if (properties.containsKey(HTTP_SERVER_PASSWORD)) sslConnector.setKeyPassword(properties.getProperty(HTTP_SERVER_PASSWORD));
+            if (properties.get(HTTP_KEYSTORE) != null) sslConnector.setKeystore((String) properties.get(HTTP_KEYSTORE));
+            if (properties.get(HTTP_TRUSTSTORE) != null) sslConnector.setTruststore((String) properties.get(HTTP_TRUSTSTORE));
+            if (properties.get(HTTP_KEYSTORE_PASSWORD) != null) sslConnector.setPassword((String) properties.get(HTTP_KEYSTORE_PASSWORD));
+            if (properties.get(HTTP_TRUSTSTORE_PASSWORD) != null) sslConnector.setTrustPassword((String) properties.get(HTTP_TRUSTSTORE_PASSWORD));
+            if (properties.get(HTTP_SERVER_PASSWORD) != null) sslConnector.setKeyPassword((String) properties.get(HTTP_SERVER_PASSWORD));
 
             sslConnector.setMaxIdleTime(30000);
             sslConnector.setPort(securePort);
