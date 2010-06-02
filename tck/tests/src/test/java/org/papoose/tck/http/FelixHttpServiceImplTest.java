@@ -69,42 +69,4 @@ public class FelixHttpServiceImplTest extends BaseHttpServiceImplTest
                 )
         );
     }
-
-    @Test
-    public void testBundleUnregsiter() throws Exception
-    {
-        Bundle test = null;
-        for (Bundle b : bundleContext.getBundles())
-        {
-            if ("org.papoose.cmpn.tck.servlet".equals(b.getSymbolicName()))
-            {
-                test = b;
-                break;
-            }
-        }
-
-        assertNotNull(test);
-
-        test.start();
-
-        URL url = new URL("http://localhost:8080/bundle");
-
-        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
-
-        assertEquals("HIT", br.readLine());
-
-        test.stop();
-        test.uninstall();
-
-        try
-        {
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
-            fail("Simple servlet improperly available");
-        }
-        catch (IOException e)
-        {
-        }
-    }
-
 }
