@@ -17,6 +17,7 @@
 package org.papoose.tck.http;
 
 import javax.servlet.GenericServlet;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -94,6 +95,22 @@ public abstract class BaseHttpServiceImplTest
             fail("Simple servlet improperly available");
         }
         catch (IOException e)
+        {
+        }
+    }
+
+    @Test
+    public void testRegisterNullServlet() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        try
+        {
+            service.registerServlet("/a/b", null, null, null);
+            fail("Should not have been able to register");
+        }
+        catch (IllegalArgumentException ignore)
         {
         }
     }
@@ -353,6 +370,101 @@ public abstract class BaseHttpServiceImplTest
     }
 
     @Test
+    public void testCollidingAliases() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        service.registerServlet("/a", new PrintTestServlet("a"), null, null);
+        try
+        {
+            service.registerServlet("/a", new PrintTestServlet("a"), null, null);
+            fail("Collision should have generated an exception");
+        }
+        catch (NamespaceException ignore)
+        {
+        }
+
+        service.unregister("/a");
+    }
+
+    @Test
+    public void testServletSharing() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        Servlet servlet = new PrintTestServlet("a");
+        service.registerServlet("/a", servlet, null, null);
+        try
+        {
+            service.registerServlet("/b", servlet, null, null);
+            fail("Servlet sharing should have generated an exception");
+        }
+        catch (ServletException ignore)
+        {
+        }
+
+        service.unregister("/a");
+    }
+
+    @Test
+    public void testServletRecycling() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        final AtomicBoolean hit = new AtomicBoolean(false);
+        Servlet servlet = new GenericServlet()
+        {
+            @Override
+            public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException
+            {
+                hit.set(true);
+            }
+        };
+        service.registerServlet("/a/b", servlet, null, null);
+
+        URL url = new URL("http://localhost:8080/a/b/HttpServiceImplTest.class");
+
+        url.openStream();
+
+        assertTrue(hit.get());
+
+        service.unregister("/a/b");
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
+        }
+        catch (IOException e)
+        {
+        }
+
+        hit.set(false);
+
+        service.registerServlet("/a/b", servlet, null, null);
+
+        url.openStream();
+
+        assertTrue(hit.get());
+
+        service.unregister("/a/b");
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
+        }
+        catch (IOException e)
+        {
+        }
+    }
+
+    @Test
     public void testResourceRegistrations() throws Exception
     {
         ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
@@ -411,7 +523,7 @@ public abstract class BaseHttpServiceImplTest
         {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
-            fail("Simple servlet improperly available");
+            fail("Resource improperly available");
         }
         catch (IOException e)
         {
@@ -458,7 +570,118 @@ public abstract class BaseHttpServiceImplTest
         {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
-            fail("Simple servlet improperly available");
+            fail("Resource improperly available");
+        }
+        catch (IOException e)
+        {
+        }
+    }
+
+    @Test
+    public void testRegisterNullResource() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        service.registerResources("/a/b", "/org/papoose/tck", null);
+
+        URL url = new URL("http://localhost:8080/a/b/http/BaseHttpServiceImplTest.class");
+
+        DataInputStream reader = new DataInputStream(url.openStream());
+
+        assertEquals((byte) 0xca, reader.readByte());
+        assertEquals((byte) 0xfe, reader.readByte());
+
+        assertEquals((byte) 0xba, reader.readByte());
+        assertEquals((byte) 0xbe, reader.readByte());
+
+        service.unregister("/a/b");
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Resource improperly available");
+        }
+        catch (IOException e)
+        {
+        }
+    }
+
+    @Test
+    public void testResourceSharing() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        service.registerResources("/a/b", "/org/papoose/tck", null);
+        try
+        {
+            service.registerResources("/a/b", "/org/papoose/tck", null);
+            fail("Resource sharing should have generated an exception");
+        }
+        catch (NamespaceException ignore)
+        {
+        }
+
+        service.unregister("/a/b");
+    }
+
+    @Test
+    public void testResourceContextSharing() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        HttpContext context = new HttpContext()
+        {
+            public boolean handleSecurity(HttpServletRequest request, HttpServletResponse response) throws IOException
+            {
+                return true;
+            }
+
+            public URL getResource(String name)
+            {
+                return BaseHttpServiceImplTest.class.getResource(name);
+            }
+
+            public String getMimeType(String name)
+            {
+                return null;
+            }
+        };
+
+        service.registerResources("/a/b", "/org/papoose/tck", context);
+        service.registerResources("/a/c", "/org/papoose/tck", context);
+
+        URL url = new URL("http://localhost:8080/a/b/http/BaseHttpServiceImplTest.class");
+
+        DataInputStream reader = new DataInputStream(url.openStream());
+
+        assertEquals((byte) 0xca, reader.readByte());
+        assertEquals((byte) 0xfe, reader.readByte());
+
+        assertEquals((byte) 0xba, reader.readByte());
+        assertEquals((byte) 0xbe, reader.readByte());
+
+        url = new URL("http://localhost:8080/a/c/http/BaseHttpServiceImplTest.class");
+
+        reader = new DataInputStream(url.openStream());
+
+        assertEquals((byte) 0xca, reader.readByte());
+        assertEquals((byte) 0xfe, reader.readByte());
+
+        assertEquals((byte) 0xba, reader.readByte());
+        assertEquals((byte) 0xbe, reader.readByte());
+
+        service.unregister("/a/b");
+        service.unregister("/a/c");
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Resource improperly available");
         }
         catch (IOException e)
         {

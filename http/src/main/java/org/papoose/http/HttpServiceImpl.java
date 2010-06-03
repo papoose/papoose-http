@@ -102,6 +102,8 @@ public class HttpServiceImpl implements ServiceFactory
     {
         LOGGER.entering(CLASS_NAME, "registerServlet", new Object[]{ alias, servlet, initParams, httpContext });
 
+        if (servlet == null) throw new IllegalArgumentException("Servlet cannot be null");
+
         Properties p;
         if (initParams == null)
         {
@@ -183,6 +185,8 @@ public class HttpServiceImpl implements ServiceFactory
     void registerResources(String alias, String name, HttpContext httpContext) throws NamespaceException
     {
         LOGGER.entering(CLASS_NAME, "registerResources", new Object[]{ alias, name, httpContext });
+
+        if (httpContext == null) httpContext = createDefaultHttpContext();
 
         try
         {
