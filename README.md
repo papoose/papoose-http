@@ -8,6 +8,7 @@ An OSGi Service Platform normally provides users with access to services on the 
 Bundle developers typically need to develop communication and user interface solutions for standard technologies such as HTTP, HTML, XML, and servlets.
 
 The Http Service supports two standard techniques for this purpose:
+
 * Registering servlets – A servlet is a Java object which implements the Java Servlet API. Registering a servlet in the Framework gives it control over some part of the Http Service URI name-space.
 * Registering resources – Registering a resource allows HTML files, image files, and other static resources to be made visible in the Http Service URI name-space by the requesting bundle.
 
