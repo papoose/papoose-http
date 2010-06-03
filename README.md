@@ -1,6 +1,5 @@
 Papoose OSGi HTTP Service
 =====
-
 <em>An OSGi HTTP Service implementation.</em>
 
 An OSGi Service Platform normally provides users with access to services on the Internet and other networks. This access allows users to remotely retrieve information from, and send control to, services in an OSGi Service Platform using a standard web browser.
