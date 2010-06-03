@@ -16,9 +16,22 @@
  */
 package org.papoose.http;
 
+import javax.servlet.GenericServlet;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Properties;
 
 import org.junit.Test;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.thread.QueuedThreadPool;
 
 
 /**
@@ -38,6 +51,47 @@ public class JettyHttpServerTest
         server.start();
 
         Thread.sleep(1 * 1000);
+
+        server.stop();
+    }
+
+    @Test
+    public void testJetty() throws Exception
+    {
+        Server server = new Server();
+        server.setThreadPool(new QueuedThreadPool(5));
+
+        Context root = new Context(server, "/", Context.SESSIONS);
+
+        root.addServlet(new ServletHolder(new GenericServlet()
+        {
+            @Override
+            public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException
+            {
+                HttpServletRequest request = (HttpServletRequest) req;
+                System.err.println("ContextPath: " + request.getContextPath());
+                System.err.println("getPathInfo: " + request.getPathInfo());
+                System.err.println("getServletPath: " + request.getServletPath());
+
+                System.err.println("ContextPath: " + getServletConfig().getServletContext().getContextPath());
+                System.err.println("getServerInfo: " + getServletConfig().getServletContext().getServerInfo());
+                System.err.println("getServletContextName: " + getServletConfig().getServletContext().getServletContextName());
+//                getServletConfig().getServletContext().getServletContextName()
+                //Todo change body of implemented methods use File | Settings | File Templates.
+            }
+        }), "/a/b/*");
+
+        SelectChannelConnector connector = new SelectChannelConnector();
+
+        connector.setPort(8080);
+
+        server.addConnector(connector);
+
+        server.start();
+
+        URL url = new URL("http://localhost:8080/a/b/c/d.xml");
+
+        url.openConnection().getInputStream();
 
         server.stop();
     }

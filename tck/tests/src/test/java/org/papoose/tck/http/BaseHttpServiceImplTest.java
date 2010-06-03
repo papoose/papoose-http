@@ -33,10 +33,12 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.ops4j.pax.exam.Inject;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpContext;
@@ -47,8 +49,10 @@ import org.papoose.tck.http.servlets.AttributeInitTestServlet;
 import org.papoose.tck.http.servlets.AttributePrintTestServlet;
 import org.papoose.tck.http.servlets.ParameterTestServlet;
 import org.papoose.tck.http.servlets.PrintTestServlet;
+import org.papoose.tck.http.servlets.RequestTestServlet;
 import org.papoose.tck.http.servlets.ServletConfigInitParameterTestServlet;
 import org.papoose.tck.http.servlets.ServletContextInitParameterTestServlet;
+import org.papoose.tck.http.servlets.ServletContextTestServlet;
 
 
 /**
@@ -82,6 +86,60 @@ public abstract class BaseHttpServiceImplTest
         url.openStream();
 
         assertTrue(hit.get());
+
+        service.unregister("/a/b");
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
+        }
+        catch (IOException e)
+        {
+        }
+    }
+
+    @Test
+    public void testRequest() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        service.registerServlet("/a/b", new RequestTestServlet(), null, null);
+
+        URL url = new URL("http://localhost:8080/a/b/c/HttpServiceImplTest.class?a=1&b=2&c=3");
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+
+        assertEquals("##/c/HttpServiceImplTest.class#/a/b#", br.readLine());
+
+        service.unregister("/a/b");
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
+        }
+        catch (IOException e)
+        {
+        }
+    }
+
+    @Test
+    public void testServletContext() throws Exception
+    {
+        ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
+        HttpService service = (HttpService) bundleContext.getService(sr);
+
+        service.registerServlet("/a/b", new ServletContextTestServlet(), null, null);
+
+        URL url = new URL("http://localhost:8080/a/b/c/HttpServiceImplTest.class?a=1&b=2&c=3");
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+
+        assertEquals("##/#", br.readLine());
 
         service.unregister("/a/b");
 
@@ -399,6 +457,43 @@ public abstract class BaseHttpServiceImplTest
         assertEquals((byte) 0xbe, reader.readByte());
 
         service.unregister("/a/b");
+
+        try
+        {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) throw new IOException("404");
+            fail("Simple servlet improperly available");
+        }
+        catch (IOException e)
+        {
+        }
+    }
+
+    @Test
+    public void testBundleUnregsiter() throws Exception
+    {
+        Bundle test = null;
+        for (Bundle b : bundleContext.getBundles())
+        {
+            if ("org.papoose.cmpn.tck.servlet".equals(b.getSymbolicName()))
+            {
+                test = b;
+                break;
+            }
+        }
+
+        assertNotNull(test);
+
+        test.start();
+
+        URL url = new URL("http://localhost:8080/bundle");
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+
+        assertEquals("HIT", br.readLine());
+
+        test.stop();
+        test.uninstall();
 
         try
         {

@@ -74,7 +74,7 @@ class ServletContextImpl implements ServletContext
 
     public String getContextPath()
     {
-        return CURRENT_SERVLET.get().getAlias();
+        return "";
     }
 
     public ServletContext getContext(String uripath)
@@ -179,7 +179,7 @@ class ServletContextImpl implements ServletContext
 
     public String getServerInfo()
     {
-        return "Papoose OSGi HTTP server";
+        return "papoose-http/1.2";
     }
 
     public String getInitParameter(String name)
@@ -214,7 +214,7 @@ class ServletContextImpl implements ServletContext
 
     public String getServletContextName()
     {
-        return null;
+        return "/";
     }
 
     static void insertCurrentServlet(ServletRegistration initParams)

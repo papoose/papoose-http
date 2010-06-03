@@ -57,7 +57,7 @@ public class ServletDispatcher extends HttpServlet
 
                         try
                         {
-                            registration.getServlet().service(req, resp);
+                            registration.getServlet().service(new RequestWrapper(registration.getAlias(), req), resp);
                             return;
                         }
                         catch (ServletException e)
@@ -166,7 +166,7 @@ public class ServletDispatcher extends HttpServlet
 
                                 try
                                 {
-                                    registration.getServlet().service(req, resp);
+                                    registration.getServlet().service(new RequestWrapper(registration.getAlias(), req), resp);
                                 }
                                 catch (ServletException e)
                                 {
@@ -203,7 +203,7 @@ public class ServletDispatcher extends HttpServlet
 
                                 try
                                 {
-                                    registration.getServlet().service(req, resp);
+                                    registration.getServlet().service(new RequestWrapper(registration.getAlias(), req), resp);
                                 }
                                 catch (ServletException e)
                                 {

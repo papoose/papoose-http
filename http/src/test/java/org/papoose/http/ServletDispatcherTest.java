@@ -18,11 +18,14 @@ package org.papoose.http;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static junit.framework.Assert.fail;
 import org.junit.Test;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -73,7 +76,7 @@ public class ServletDispatcherTest
                 resp.setStatus(HttpServletResponse.SC_OK);
                 return null;
             }
-        }).when(servlet).service(request, response);
+        }).when(servlet).service((ServletRequest) anyObject(), (ServletResponse) anyObject());
         when(context.handleSecurity(request, response)).thenReturn(true);
         when(request.getPathInfo()).thenReturn("/a/b/c");
 
@@ -132,7 +135,7 @@ public class ServletDispatcherTest
                 resp.setStatus(HttpServletResponse.SC_OK);
                 return null;
             }
-        }).when(servlet).service(request, response);
+        }).when(servlet).service((ServletRequest) anyObject(), (ServletResponse) anyObject());
         when(context.handleSecurity(request, response)).thenReturn(true);
         when(request.getPathInfo()).thenReturn("/a/b/c");
 
@@ -154,7 +157,7 @@ public class ServletDispatcherTest
         ServletContextImpl sc = new ServletContextImpl(context, null);
         ServletRegistration registration = new ServletRegistration("/a/b", servlet, sc, null);
 
-        doThrow(new NullPointerException()).when(servlet).service(request, response);
+        doThrow(new NullPointerException()).when(servlet).service((ServletRequest) anyObject(), (ServletResponse) anyObject());
         when(context.handleSecurity(request, response)).thenReturn(true);
         when(request.getPathInfo()).thenReturn("/a/b/c");
 
@@ -176,7 +179,7 @@ public class ServletDispatcherTest
         ServletContextImpl sc = new ServletContextImpl(context, null);
         ServletRegistration registration = new ServletRegistration("/a/b", servlet, sc, null);
 
-        doThrow(new ServletException()).when(servlet).service(request, response);
+        doThrow(new ServletException()).when(servlet).service((ServletRequest) anyObject(), (ServletResponse) anyObject());
         when(context.handleSecurity(request, response)).thenReturn(true);
         when(request.getPathInfo()).thenReturn("/a/b/c");
 
