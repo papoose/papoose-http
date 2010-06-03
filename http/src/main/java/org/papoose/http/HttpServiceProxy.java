@@ -46,33 +46,55 @@ class HttpServiceProxy implements HttpService
 
     public void registerServlet(String alias, Servlet servlet, Dictionary initparams, HttpContext context) throws ServletException, NamespaceException
     {
+        LOGGER.entering(CLASS_NAME, "registerServlet", new Object[]{ alias, servlet, initparams, context });
+
         service.registerServlet(alias, servlet, initparams, context);
         aliases.add(alias);
+
+        LOGGER.exiting(CLASS_NAME, "registerServlet");
     }
 
     public void registerResources(String alias, String name, HttpContext context) throws NamespaceException
     {
+        LOGGER.entering(CLASS_NAME, "registerResources", new Object[]{ alias, name, context });
+
         service.registerResources(alias, name, context);
         aliases.add(alias);
+
+        LOGGER.exiting(CLASS_NAME, "registerResources");
     }
 
     public void unregister(String alias)
     {
+        LOGGER.entering(CLASS_NAME, "unregister", alias);
+
         service.unregister(alias);
         aliases.remove(alias);
+
+        LOGGER.exiting(CLASS_NAME, "unregister");
     }
 
     public HttpContext createDefaultHttpContext()
     {
-        return service.createDefaultHttpContext();
+        LOGGER.entering(CLASS_NAME, "createDefaultHttpContext");
+
+        HttpContext context = service.createDefaultHttpContext();
+
+        LOGGER.exiting(CLASS_NAME, "createDefaultHttpContext", context);
+
+        return context;
     }
 
     public void unregister()
     {
+        LOGGER.entering(CLASS_NAME, "unregister");
+
         for (String alias : aliases)
         {
             service.unregister(alias);
         }
         aliases.clear();
+
+        LOGGER.exiting(CLASS_NAME, "unregister");
     }
 }

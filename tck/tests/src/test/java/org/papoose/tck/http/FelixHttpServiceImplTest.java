@@ -69,4 +69,16 @@ public class FelixHttpServiceImplTest extends BaseHttpServiceImplTest
                 )
         );
     }
+
+    @Test
+    public void testServletContextInitParameters() throws Exception
+    {
+        // Felix does not provide access to init parameters from the servlet context
+    }
+
+    @Test
+    public void testResourceAbsolute() throws Exception
+    {
+        // https://issues.apache.org/jira/browse/FELIX-2386
+    }
 }

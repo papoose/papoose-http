@@ -19,7 +19,7 @@
 
     <properties>
         <jettyVersion>6.1.19</jettyVersion>
-        <paxExamVersion>1.2.0</paxExamVersion>
+        <paxExamVersion>1.2.1-SNAPSHOT</paxExamVersion>
     </properties>
 
     <dependencyManagement>

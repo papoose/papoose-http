@@ -66,8 +66,6 @@ public abstract class BaseHttpServiceImplTest
     @Test
     public void testServletRegistrations() throws Exception
     {
-        assertTrue(false);
-
         ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
         HttpService service = (HttpService) bundleContext.getService(sr);
 
@@ -426,7 +424,7 @@ public abstract class BaseHttpServiceImplTest
         ServiceReference sr = bundleContext.getServiceReference(HttpService.class.getName());
         HttpService service = (HttpService) bundleContext.getService(sr);
 
-        service.registerResources("/a/b", ".", new HttpContext()
+        service.registerResources("/a/b", "org/papoose/tck", new HttpContext()
         {
             public boolean handleSecurity(HttpServletRequest request, HttpServletResponse response) throws IOException
             {
@@ -435,9 +433,7 @@ public abstract class BaseHttpServiceImplTest
 
             public URL getResource(String name)
             {
-                name = name.replaceAll("^\\./", "");
-                name = name.replaceAll("/\\./", "/");
-                return BaseHttpServiceImplTest.class.getResource(name);
+                return BaseHttpServiceImplTest.class.getResource("/" + name);
             }
 
             public String getMimeType(String name)
@@ -446,7 +442,7 @@ public abstract class BaseHttpServiceImplTest
             }
         });
 
-        URL url = new URL("http://localhost:8080/a/b/BaseHttpServiceImplTest.class");
+        URL url = new URL("http://localhost:8080/a/b/http/BaseHttpServiceImplTest.class");
 
         DataInputStream reader = new DataInputStream(url.openStream());
 

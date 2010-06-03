@@ -63,8 +63,6 @@ class ResourceServletWrapper extends HttpServlet
         LOGGER.entering(CLASS_NAME, "service", new Object[]{ req, resp });
 
         String path = req.getPathInfo();
-
-        path = path.substring(alias.length());
         path = name + path;
 
         final URL url = httpContext.getResource(path);

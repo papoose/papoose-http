@@ -34,7 +34,6 @@ public class ServletContextTestServlet extends GenericServlet
 {
     public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException
     {
-        HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
         BufferedWriter stream = new BufferedWriter(new OutputStreamWriter(response.getOutputStream()));
 

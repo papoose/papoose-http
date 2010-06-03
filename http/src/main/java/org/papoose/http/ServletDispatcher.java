@@ -43,6 +43,8 @@ public class ServletDispatcher extends HttpServlet
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
+        LOGGER.entering(CLASS_NAME, "service", new Object[]{ req, resp });
+
         String path = req.getPathInfo();
 
         while (true)
