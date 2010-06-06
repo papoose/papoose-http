@@ -17,6 +17,7 @@
 package org.papoose.tck.bundles.servlet;
 
 import javax.servlet.GenericServlet;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -24,6 +25,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.papoose.test.bundles.share.Share;
 
 
 /**
@@ -31,9 +35,18 @@ import java.io.OutputStreamWriter;
  */
 public class TestServlet extends GenericServlet
 {
+    private final Share share;
+
+    public TestServlet(Share share)
+    {
+        this.share = share;
+    }
+
     @Override
     public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException
     {
+        share.put("HIT", Boolean.TRUE);
+
         HttpServletResponse response = (HttpServletResponse) res;
         BufferedWriter stream = new BufferedWriter(new OutputStreamWriter(response.getOutputStream()));
 
@@ -42,5 +55,17 @@ public class TestServlet extends GenericServlet
         stream.close();
 
         response.setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Override
+    public void init() throws ServletException
+    {
+        share.put("INIT", true);
+    }
+
+    @Override
+    public void destroy()
+    {
+        share.put("DESTROY", true);
     }
 }

@@ -62,7 +62,6 @@ public class FelixHttpServiceImplTest extends BaseHttpServiceImplTest
                 felix(),
                 knopflerfish(),
                 // papoose(),
-                compendiumProfile(),
                 // vmOption("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
                 // this is necessary to let junit runner not timeout the remote process before attaching debugger
                 // setting timeout to 0 means wait as long as the remote service comes available.
@@ -70,8 +69,7 @@ public class FelixHttpServiceImplTest extends BaseHttpServiceImplTest
                 // will not be triggered till the framework is not started
                 // waitForFrameworkStartup()
                 provision(
-                        mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.http.jetty").version(asInProject()),
-                        mavenBundle().groupId("org.papoose.cmpn.tck.bundles").artifactId("servlet").version(asInProject())
+                        mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.http.jetty").version(asInProject())
                 )
         );
     }

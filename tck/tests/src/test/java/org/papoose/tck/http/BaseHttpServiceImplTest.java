@@ -30,17 +30,29 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import org.junit.Before;
 import org.junit.Test;
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+import static org.ops4j.pax.exam.CoreOptions.options;
+import static org.ops4j.pax.exam.CoreOptions.provision;
 import org.ops4j.pax.exam.Inject;
+import static org.ops4j.pax.exam.MavenUtils.asInProject;
+import org.ops4j.pax.exam.Option;
+import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.compendiumProfile;
+import org.ops4j.pax.exam.junit.Configuration;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
@@ -54,6 +66,8 @@ import org.papoose.tck.http.servlets.RequestTestServlet;
 import org.papoose.tck.http.servlets.ServletConfigInitParameterTestServlet;
 import org.papoose.tck.http.servlets.ServletContextInitParameterTestServlet;
 import org.papoose.tck.http.servlets.ServletContextTestServlet;
+import org.papoose.test.bundles.share.Share;
+import org.papoose.test.bundles.share.ShareListener;
 
 
 /**
@@ -63,6 +77,20 @@ public abstract class BaseHttpServiceImplTest
 {
     @Inject
     protected BundleContext bundleContext = null;
+    protected ServiceReference shareReference;
+    protected Share share;
+
+    @Configuration
+    public static Option[] baseConfiguration()
+    {
+        return options(
+                compendiumProfile(),
+                provision(
+                        mavenBundle().groupId("org.papoose.cmpn.tck.bundles").artifactId("servlet").version(asInProject()).start(false),
+                        mavenBundle().groupId("org.papoose.test.bundles").artifactId("test-share").version(asInProject())
+                )
+        );
+    }
 
     @Test
     public void testServletRegistrations() throws Exception
@@ -691,6 +719,22 @@ public abstract class BaseHttpServiceImplTest
     @Test
     public void testBundleUnregsiter() throws Exception
     {
+        final Map<String, Object> state = new HashMap<String, Object>();
+        share.addListener(new ShareListener()
+        {
+            public void get(String key, Object value)
+            {
+            }
+
+            public void put(String key, Object value)
+            {
+                state.put(key, value);
+            }
+
+            public void clear()
+            {
+            }
+        });
         Bundle test = null;
         for (Bundle b : bundleContext.getBundles())
         {
@@ -705,14 +749,19 @@ public abstract class BaseHttpServiceImplTest
 
         test.start();
 
+        assertEquals(true, state.get("INIT"));
+
         URL url = new URL("http://localhost:8080/bundle");
 
         BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
 
         assertEquals("HIT", br.readLine());
+        assertEquals(true, share.get("HIT"));
 
         test.stop();
         test.uninstall();
+
+        assertEquals(null, state.get("DESTROY"));
 
         try
         {
@@ -723,5 +772,20 @@ public abstract class BaseHttpServiceImplTest
         catch (IOException e)
         {
         }
+    }
+
+    @Before
+    public void before()
+    {
+        shareReference = bundleContext.getServiceReference(Share.class.getName());
+        share = (Share) bundleContext.getService(shareReference);
+    }
+
+    @After
+    public void after()
+    {
+        bundleContext.ungetService(shareReference);
+        shareReference = null;
+        share = null;
     }
 }

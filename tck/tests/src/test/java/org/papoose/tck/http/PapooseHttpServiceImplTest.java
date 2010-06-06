@@ -38,6 +38,7 @@ import static org.ops4j.pax.exam.CoreOptions.provision;
 import static org.ops4j.pax.exam.MavenUtils.asInProject;
 import org.ops4j.pax.exam.Option;
 import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.compendiumProfile;
+import static org.ops4j.pax.exam.container.def.PaxRunnerOptions.vmOption;
 import org.ops4j.pax.exam.junit.Configuration;
 import org.ops4j.pax.exam.junit.JUnit4TestRunner;
 import org.osgi.framework.ServiceReference;
@@ -68,7 +69,6 @@ public class PapooseHttpServiceImplTest extends BaseHttpServiceImplTest
                 felix(),
                 knopflerfish(),
                 // papoose(),
-                compendiumProfile(),
                 // vmOption("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
                 // this is necessary to let junit runner not timeout the remote process before attaching debugger
                 // setting timeout to 0 means wait as long as the remote service comes available.
@@ -79,8 +79,7 @@ public class PapooseHttpServiceImplTest extends BaseHttpServiceImplTest
                         mavenBundle().groupId("javax.servlet").artifactId("com.springsource.javax.servlet").version(asInProject()),
                         mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty").version(asInProject()),
                         mavenBundle().groupId("org.mortbay.jetty").artifactId("jetty-util").version(asInProject()),
-                        mavenBundle().groupId("org.papoose.cmpn").artifactId("papoose-http").version(asInProject()),
-                        mavenBundle().groupId("org.papoose.cmpn.tck.bundles").artifactId("servlet").version(asInProject())
+                        mavenBundle().groupId("org.papoose.cmpn").artifactId("papoose-http").version(asInProject())
                 )
         );
     }

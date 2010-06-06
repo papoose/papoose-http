@@ -68,7 +68,7 @@ class HttpServiceProxy implements HttpService
     {
         LOGGER.entering(CLASS_NAME, "unregister", alias);
 
-        service.unregister(alias);
+        service.unregister(alias, true);
         aliases.remove(alias);
 
         LOGGER.exiting(CLASS_NAME, "unregister");
@@ -91,7 +91,7 @@ class HttpServiceProxy implements HttpService
 
         for (String alias : aliases)
         {
-            service.unregister(alias);
+            service.unregister(alias, false);
         }
         aliases.clear();
 

@@ -41,7 +41,6 @@ public class EquinoxHttpServiceImplTest extends BaseHttpServiceImplTest
     {
         return options(
                 equinox(),
-                compendiumProfile(),
                 vmOption("-Dorg.osgi.service.http.port=8080"),
                 // vmOption("-Dorg.osgi.service.http.port=8080 -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"),
                 // this is necessary to let junit runner not timeout the remote process before attaching debugger
@@ -51,8 +50,7 @@ public class EquinoxHttpServiceImplTest extends BaseHttpServiceImplTest
                 // waitForFrameworkStartup()
                 provision(
                         mavenBundle().groupId("javax.servlet").artifactId("com.springsource.javax.servlet").version(asInProject()),
-                        mavenBundle().groupId("org.eclipse.equinox").artifactId("http").version(asInProject()),
-                        mavenBundle().groupId("org.papoose.cmpn.tck.bundles").artifactId("servlet").version(asInProject())
+                        mavenBundle().groupId("org.eclipse.equinox").artifactId("http").version(asInProject())
                 )
         );
     }

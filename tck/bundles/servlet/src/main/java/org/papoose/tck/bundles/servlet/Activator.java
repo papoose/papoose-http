@@ -25,6 +25,7 @@ import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
+import org.papoose.test.bundles.share.Share;
 
 
 /**
@@ -36,15 +37,20 @@ public class Activator implements BundleActivator
 
     public void start(final BundleContext context) throws Exception
     {
+        ServiceReference reference = context.getServiceReference(Share.class.getName());
+        final Share share = (Share)context.getService(reference);
+
+        if (share == null) throw new IllegalStateException("Share has not been started");
+
         ServiceTracker tracker = new ServiceTracker(context, HttpService.class.getName(), new ServiceTrackerCustomizer()
         {
-            public Object addingService(ServiceReference reference)
+            public Object addingService(ServiceReference sr)
             {
                 try
                 {
-                    HttpService service = (HttpService) context.getService(reference);
+                    HttpService service = (HttpService)context.getService(sr);
 
-                    service.registerServlet(ALIAS, new TestServlet(), null, null);
+                    service.registerServlet(ALIAS, new TestServlet(share), null, null);
 
                     return service;
                 }
