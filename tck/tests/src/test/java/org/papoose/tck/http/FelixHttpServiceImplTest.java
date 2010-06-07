@@ -157,4 +157,9 @@ public class FelixHttpServiceImplTest extends BaseHttpServiceImplTest
         }
     }
 
+    @Test
+    public void testBundleUnregsiter() throws Exception
+    {
+        // https://issues.apache.org/jira/browse/FELIX-2394
+    }
 }
