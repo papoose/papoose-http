@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.papoose.cmpn</groupId>
     <artifactId>papoose-http</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>bundle</packaging>
     <name>Papoose :: HTTP Service</name>
     <description>OSGi Http Service</description>
