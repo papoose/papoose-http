@@ -203,7 +203,7 @@ public class HttpServiceImpl implements ServiceFactory
     /**
      * {@inheritDoc}
      */
-    void unregister(String alias)
+    void unregister(String alias, boolean destroy)
     {
         LOGGER.entering(CLASS_NAME, "unregister", alias);
 
@@ -226,7 +226,7 @@ public class HttpServiceImpl implements ServiceFactory
         {
             dispatcher.unregister(registration);
 
-            registration.getServlet().destroy();
+            if (destroy) registration.getServlet().destroy();
         }
         catch (Throwable t)
         {
