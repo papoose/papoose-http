@@ -15,4 +15,4 @@ The Http Service supports two standard techniques for this purpose:
 
 *  Discuss Papoose at [http://groups.google.com/group/papoose-r4](http://groups.google.com/group/papoose-r4)
 *  Learn even more at [http://www.papoose-r4.org](http://www.papoose-r4.org)
-*  Check out code at [http://github.com/maguro/papoose-http](http://github.com/maguro/papoose-http)
+*  Check out code at [http://github.com/papoose/papoose-http](http://github.com/papoose/papoose-http)
